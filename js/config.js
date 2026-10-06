@@ -14,7 +14,7 @@ window.SITE = {
      https://docs.google.com/spreadsheets/d/  <THIS_PART>  /edit
      The sheet must be shared as: "Anyone with the link → Viewer".
      While this still says PASTE_..., the site shows built-in SAMPLE data. */
-  sheetId: "https://docs.google.com/spreadsheets/d/1e6JfT_T0D06NS1Vl1zL84VuEexltGj7fjmT6NOlHocs/edit?usp=sharing",
+  sheetId: "1e6JfT_T0D06NS1Vl1zL84VuEexltGj7fjmT6NOlHocs",
 
   /* Tab names inside that sheet (must match exactly, case-sensitive) */
   tabs: {
