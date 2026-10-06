@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Home</title>
+<meta name="description" content="Discover startups, angel investors, VCs, incubators, government schemes and banks in one place.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="home">
+<main>
+
+  <!-- HERO -->
+  <section class="hero">
+    <span class="shape s1"></span><span class="shape s2"></span><span class="shape s3"></span>
+    <div class="wrap">
+      <div class="hero-grid">
+        <div>
+          <h1>Navigate the startup &amp; investor world with <em>ease</em> and accuracy</h1>
+          <p class="lead">One place to find startups, angels, VCs, incubators, government schemes and banks. Always up to date, free to browse.</p>
+          <div class="hero-actions">
+            <a class="btn btn-solid" href="directory.html">Explore directories</a>
+            <a class="btn btn-ghost" href="solutions.html">See how it helps you</a>
+          </div>
+        </div>
+        <div class="console" aria-label="Search">
+          <h2>Search anything</h2>
+          <div class="tabs" id="tabs" role="tablist"></div>
+          <label class="sbox"><svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 2a8 8 0 1 0 5 14.3l5.4 5.4 1.4-1.4-5.4-5.4A8 8 0 0 0 10 2zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/></svg>
+            <input id="q" type="search" placeholder="Try a name, sector or city" autocomplete="off" aria-label="Search"></label>
+          <div class="results" id="res" aria-live="polite"></div>
+        </div>
+      </div>
+      <div class="stats" id="stats" aria-label="Ecosystem numbers"></div>
+    </div>
+  </section>
+
+  <!-- AUDIENCES -->
+  <section class="band">
+    <div class="wrap">
+      <div class="sec-head"><div><h2>Built for everyone in the ecosystem</h2><p>Pick the role that fits you and jump straight to what helps most.</p></div></div>
+      <div class="grid g3">
+        <a class="card adv" style="--c:#f5a200" href="solutions.html#investors"><small>For investors</small><h3>Screen startups efficiently</h3><p>Filter by sector, stage and city and see what's new each month.</p></a>
+        <a class="card adv" style="--c:#ff5c5c" href="solutions.html#startups"><small>For startups</small><h3>Reach the right investors</h3><p>Browse angels, VCs and funding agencies that match your stage.</p></a>
+        <a class="card adv" style="--c:#00a99d" href="solutions.html#incubators"><small>For incubators</small><h3>Find high-potential startups</h3><p>Scan the landscape and showcase your own programme.</p></a>
+        <a class="card adv" style="--c:#7c4dff" href="solutions.html#researchers"><small>For researchers</small><h3>Work with fresh data</h3><p>Structured, regularly updated records on startups and funding.</p></a>
+        <a class="card adv" style="--c:#2f80ed" href="solutions.html#orgs"><small>For organisations</small><h3>Find partners for innovation</h3><p>Trends, curated lists and custom dashboards on request.</p></a>
+        <a class="card adv" style="--c:#22a559" href="solutions.html#researchers"><small>For students</small><h3>Prepare for interviews</h3><p>Learn how startups and funds work before you apply.</p></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIRECTORIES -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head"><div><h2>Cruise through the startup ecosystem</h2><p>Six directories, one search. Every entry is added by our team or reviewed before it goes live.</p></div><a class="link-arrow" href="directory.html">View all directories <svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M5 11h11.2l-4.6-4.6L13 5l7 7-7 7-1.4-1.4 4.6-4.6H5z"/></svg></a></div>
+      <div class="grid g3" id="products"></div>
+    </div>
+  </section>
+
+  <!-- FEATURED STARTUPS -->
+  <section class="band">
+    <div class="wrap">
+      <div class="sec-head"><div><h2>Featured startups</h2><p>A few companies worth a look this month.</p></div><a class="link-arrow" href="directory.html?type=startups">See all startups <svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M5 11h11.2l-4.6-4.6L13 5l7 7-7 7-1.4-1.4 4.6-4.6H5z"/></svg></a></div>
+      <div class="grid g3" id="featured"></div>
+    </div>
+  </section>
+
+  <!-- BLOG -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head"><div><h2>Latest from the blog</h2><p>Plain-language reading for builders and investors.</p></div><a class="link-arrow" href="blog.html">View all articles <svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M5 11h11.2l-4.6-4.6L13 5l7 7-7 7-1.4-1.4 4.6-4.6H5z"/></svg></a></div>
+      <div class="grid g4" id="blog"></div>
+    </div>
+  </section>
+
+  <!-- NEWSLETTER (hidden automatically until you add newsletter.action in config.js) -->
+  <section style="padding-top:0" data-nl-wrap>
+    <div class="wrap">
+      <div class="cta">
+        <div class="dots" aria-hidden="true"><i style="background:#ff5c5c"></i><i style="background:#f5a200"></i><i style="background:#00a99d"></i><i style="background:#7c4dff"></i><i style="background:#2f80ed"></i><i style="background:#22a559"></i></div>
+        <div><h2>Stay in the loop, skip the noise</h2><p>Real insights on startups and funding, straight to your inbox.</p></div>
+        <div><form class="nl" id="nl"><input type="email" name="email" required placeholder="you@example.com" aria-label="Email address"><button class="btn btn-color" style="--c:#7c4dff">Subscribe</button></form><div class="nl-msg" id="nl-msg" role="status"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUSTED BY -->
+  <section class="band" style="padding:56px 0">
+    <div class="wrap"><h2 style="font-size:1.6rem;margin-bottom:24px;text-align:center">Trusted by industry leaders</h2></div>
+    <div class="marquee" id="clients" aria-label="Partners and clients"></div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section>
+    <div class="wrap" style="text-align:center">
+      <h2>Free for everyone</h2>
+      <p class="lead" style="margin:12px auto 26px">Browse every directory at no cost, or get your own startup listed.</p>
+      <a class="btn btn-solid" href="directory.html">Start exploring</a>
+    </div>
+  </section>
+
+</main>
+<script src="js/config.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="js/data.js"></script>
+<script src="js/layout.js"></script>
+<script src="js/pages.js"></script>
+</body>
+</html>

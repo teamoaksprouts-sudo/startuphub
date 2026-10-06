@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Directories</title>
+<meta name="description" content="Browse startups, angels, VCs, incubators, government schemes and banks.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="directory">
+<main>
+  <div class="page-hero wrap">
+    <h1 id="dtitle" style="font-size:clamp(2.1rem,4.6vw,3.4rem)">Directories</h1>
+    <p class="lead" id="dblurb"></p>
+  </div>
+
+  <div class="toolbar">
+    <div class="wrap">
+      <div class="tabs" id="tabs" role="tablist" style="margin:0"></div>
+      <div class="filters">
+        <label class="sbox"><svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 2a8 8 0 1 0 5 14.3l5.4 5.4 1.4-1.4-5.4-5.4A8 8 0 0 0 10 2zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/></svg><input id="fq" type="search" placeholder="Search by name, sector, city or tag" aria-label="Search"></label>
+        <select class="sel" id="fsector" aria-label="Sector"></select>
+        <select class="sel" id="flocation" aria-label="Location"></select>
+        <select class="sel" id="fstage" aria-label="Stage"></select>
+        <select class="sel" id="fsort" aria-label="Sort"><option value="az">A to Z</option><option value="new">Newest first</option></select>
+      </div>
+      <div style="margin-top:8px"><button class="link-arrow" id="fclear" style="background:none;border:0;cursor:pointer;font-size:.9rem">Clear filters</button></div>
+    </div>
+  </div>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="meta" id="meta" aria-live="polite"></div>
+      <div class="grid g3" id="grid"></div>
+      <div class="more" id="more" style="display:none"><button class="btn btn-ghost">Show more</button></div>
+    </div>
+  </section>
+</main>
+<script src="js/config.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="js/data.js"></script>
+<script src="js/layout.js"></script>
+<script src="js/pages.js"></script>
+</body>
+</html>
