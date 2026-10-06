@@ -47,7 +47,7 @@ window.SITE = {
   /* ---------- 4. FOOTER: CONTACT DETAILS  (ADD YOURS HERE) ----------
      Leave a value as "" and it shows as a dimmed placeholder in the footer.
      When you are ready to launch, set hideEmptyContacts to true to hide blanks. */
-  hideEmptyContacts: False,
+  hideEmptyContacts: true,
 
   contact: {
     email:    "team.oaksprouts@gmail.com",     // e.g. "hello@yourdomain.com"
