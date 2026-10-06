@@ -47,7 +47,7 @@ window.SITE = {
   /* ---------- 4. FOOTER: CONTACT DETAILS  (ADD YOURS HERE) ----------
      Leave a value as "" and it shows as a dimmed placeholder in the footer.
      When you are ready to launch, set hideEmptyContacts to true to hide blanks. */
-  hideEmptyContacts: True,
+  hideEmptyContacts: False,
 
   contact: {
     email:    "team.oaksprouts@gmail.com",     // e.g. "hello@yourdomain.com"
@@ -59,16 +59,16 @@ window.SITE = {
   /* ---------- 5. FOOTER: SOCIAL LINKS (ADD YOURS HERE) ----------
      Paste the full profile URL, e.g. "https://www.linkedin.com/company/yourpage" */
   social: {
-    linkedin:  "",
-    twitter:   "",
-    instagram: "",
-    facebook:  "",
-    youtube:   "",
-    discord:   "",
-    blog:      ""
+    linkedin:  "https://www.linkedin.com/in/oak-sprouts/",
+    twitter:   "Test1.com",
+    instagram: "Test1.com",
+    facebook:  "Test1.com",
+    youtube:   "Test1.com",
+    discord:   "Test1.com",
+    blog:      "Test1.com"
   },
 
-  copyrightName: "Your Company Name",       // shows as © 2026 Your Company Name
+  copyrightName: "Oak Sprouts",       // shows as © 2026 Your Company Name
 
   /* ---------- 6. PRICING PAGE (edit or delete plans) ---------- */
   plans: [
