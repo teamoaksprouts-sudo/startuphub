@@ -11,14 +11,31 @@
     ? `<span class="av" style="--c:${color}"><img src="${esc(safeUrl(r.logo_url))}" alt="" loading="lazy" onerror="this.parentNode.textContent='${esc(initials(r.name))}'"></span>`
     : `<span class="av" style="--c:${color}">${esc(initials(r.name))}</span>`;
 
+  /* A clickable chip that lists every item sharing this value (e.g. all startups funded by one investor) */
+  const facetChip = (type, field, value, cls = "") =>
+    `<a class="chip facet ${cls}" href="${esc(Data.facetUrl(type, field, value))}" title="See all ${esc(D[type].label)} with ${esc(Data.FACETS[field] || field)}: ${esc(value)}">${esc(value)}</a>`;
+
+  const badStatus = (r) => /closed|inactive|shut|failed|defunct|acquired|dormant|expired|discontinued|wound/i.test(r.status || "");
+
+  const compareBox = (r, type) => (type === "startups" && window.Compare
+    ? `<label class="cmp" title="Add to compare (max ${Compare.MAX})"><input type="checkbox" data-cmp="${esc(r.name)}"${Compare.has(r.name) ? " checked" : ""}> Compare</label>` : "");
+
   function card(r, type) {
     const c = D[type].color;
     const isNew = Data.daysAgo(r.added_on) <= 30;
+    const chips = [
+      ...Data.split(r.sector).slice(0, 2).map((x) => facetChip(type, "sector", x)),
+      r.stage ? facetChip(type, "stage", Data.split(r.stage)[0]) : "",
+      r.location ? facetChip(type, "location", Data.facetValues(r, "location")[0] || "", "plain") : ""
+    ].join("");
+    const facts = [r.funding, r.founded ? "Founded " + r.founded : ""].filter(Boolean).join(" · ");
+    const inactive = badStatus(r);
     return `<article class="card item click" tabindex="0" role="button" data-name="${esc(r.name)}" style="--c:${c}">
       ${isNew ? '<span class="new">New</span>' : ""}
-      <div class="top">${avatar(r, c)}<div><h3>${esc(r.name)}</h3><div class="tag">${esc(r.tagline || "")}</div></div></div>
-      <p>${esc((r.description || "").slice(0, 120))}${(r.description || "").length > 120 ? "…" : ""}</p>
-      <div class="chips">${[r.sector, r.stage].filter(Boolean).map((x) => `<span class="chip">${esc(x.split(",")[0])}</span>`).join("")}${r.location ? `<span class="chip plain">${esc(r.location)}</span>` : ""}</div>
+      <div class="top">${avatar(r, c)}<div><h3>${esc(r.name)}</h3>${r.tagline ? `<div class="tag">${esc(r.tagline)}</div>` : ""}</div></div>
+      ${r._derived || !r.description ? "" : `<p>${esc(r.description.slice(0, 120))}${r.description.length > 120 ? "…" : ""}</p>`}
+      <div class="chips">${chips}${inactive ? `<span class="chip warn">${esc(r.status)}</span>` : ""}</div>
+      <div class="foot"><span>${esc(facts)}</span>${compareBox(r, type)}</div>
     </article>`;
   }
 
@@ -30,30 +47,80 @@
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") m.classList.remove("open"); });
     return m;
   }
-  function openModal(r, type) {
-    const c = D[type].color, m = ensureModal();
-    const skip = ["name", "tagline", "description", "approved", "featured", "logo_url", "added_on", "website", "linkedin", "tags"];
-    const rows = Object.entries(r).filter(([k, v]) => v && !skip.includes(k))
-      .map(([k, v]) => `<dt>${esc(k.replace(/_/g, " ").replace(/^./, (x) => x.toUpperCase()))}</dt><dd>${esc(v)}</dd>`).join("");
+
+  const SKIP = ["name", "tagline", "description", "approved", "visible", "featured", "logo_url", "added_on", "website", "linkedin", "tags", "_derived", "source_url", "last_verified", "timestamp", "sector", "stage", "location"];
+  const label = (k) => k.replace(/_/g, " ").replace(/^./, (x) => x.toUpperCase());
+
+  async function openModal(r, type) {
+    const c = D[type].color, m = ensureModal(), isS = type === "startups";
     const web = safeUrl(r.website), li = safeUrl(r.linkedin);
+    const text = (title, v) => (v ? `<div class="blk"><h4>${title}</h4><p>${esc(v)}</p></div>` : "");
+    const facet = (title, field) => {
+      const vals = Data.facetValues(r, field);
+      return vals.length ? `<div class="blk"><h4>${title}</h4><div class="chips">${vals.map((v) => facetChip(type, field, v)).join("")}</div></div>` : "";
+    };
+    let body;
+    if (isS) {
+      const facts = [["Headquarters", r.location], ["Founded", r.founded], ["Funding", r.funding], ["Stage", r.stage], ["Team size", r.team_size], ["Users / customers", r.user_base], ["Status", r.status]]
+        .filter((x) => x[1]).map((x) => `<dt>${x[0]}</dt><dd>${esc(x[1])}</dd>`).join("");
+      body = `${text("About", r.description)}${text("Competitive edge", r.competitive_edge)}${text("Business model", r.business_model)}
+        ${facts ? `<dl class="kv">${facts}</dl>` : ""}
+        <div id="fx"></div>
+        ${facet("Sector", "sector")}${facet("Underlying technology", "tech")}${facet("Key investors", "investors")}${facet("Primary competition", "competitors")}${facet("Tags", "tags")}`;
+    } else {
+      const rows = Object.entries(r).filter(([k, v]) => v && !SKIP.includes(k)).map(([k, v]) => `<dt>${esc(label(k))}</dt><dd>${/^https?:\/\//i.test(v) && safeUrl(v) ? `<a class="link-arrow" href="${esc(safeUrl(v))}" target="_blank" rel="noopener">Open ${svg("ext")}</a>` : esc(v)}</dd>`).join("");
+      body = `${text("About", r.description)}${rows ? `<dl class="kv">${rows}</dl>` : ""}${facet("Sector", "sector")}${facet("Stage", "stage")}${facet("Location", "location")}${facet("Tags", "tags")}`;
+    }
     $("#sheet").innerHTML = `<button class="x" aria-label="Close">×</button>
-      <div style="display:flex;gap:14px;align-items:center">${avatar(r, c)}<span class="chip" style="--c:${c}">${esc(D[type].single)}</span></div>
-      <h2>${esc(r.name)}</h2><p class="tag" style="color:var(--muted)">${esc(r.tagline || "")}</p>
-      <p style="margin-top:14px">${esc(r.description || "")}</p>
-      ${rows ? `<dl class="kv">${rows}</dl>` : ""}
-      ${r.tags ? `<div class="chips">${Data.split(r.tags).map((t) => `<span class="chip plain">${esc(t)}</span>`).join("")}</div>` : ""}
-      <div style="display:flex;gap:10px;margin-top:22px;flex-wrap:wrap">
+      <div style="display:flex;gap:14px;align-items:center">${avatar(r, c)}<span class="chip" style="--c:${c}">${esc(D[type].single)}</span>${badStatus(r) ? `<span class="chip warn">${esc(r.status)}</span>` : ""}</div>
+      <h2>${esc(r.name)}</h2>${r._derived ? "" : `<p class="tag" style="color:var(--muted)">${esc(r.tagline || "")}</p>`}
+      ${body}
+      <div class="actions">
         ${web ? `<a class="btn btn-color" style="--c:${c}" href="${esc(web)}" target="_blank" rel="noopener">Visit website ${svg("ext")}</a>` : ""}
         ${li ? `<a class="btn btn-ghost" href="${esc(li)}" target="_blank" rel="noopener">${svg("linkedin")} LinkedIn</a>` : ""}
+        ${["angels", "vcs", "incubators"].includes(type) ? `<a class="btn btn-ghost" href="${esc(Data.facetUrl("startups", "investors", r.name))}">Startups in our database backed by ${esc(r.name.length > 28 ? "them" : r.name)}</a>` : ""}
+        ${isS && window.Compare ? `<button class="btn btn-ghost" data-cmp-btn="${esc(r.name)}"></button>` : ""}
       </div>`;
     m.classList.add("open");
     $(".x", m).focus();
+    syncCompareBtn();
+
+    if (isS) {                                   /* founders come from the Founders tab */
+      const fx = $("#fx"), all = (await Data.load("founders")).rows;
+      let list = Data.foundersOf(all, r.name);
+      if (!fx || !m.classList.contains("open")) return;
+      if (!list.length && r.founders) list = Data.split(r.founders).map((n) => ({ name: n }));
+      if (list.length) fx.innerHTML = `<div class="blk"><h4>Founders</h4><div class="founders">${list.map((f) => {
+        const l = safeUrl(f.linkedin);
+        return `<div class="fcard"><span class="av" style="--c:${c}">${esc(initials(f.name))}</span><div><a class="fname" href="${esc(Data.facetUrl("startups", "founders", f.name))}" title="See all startups by ${esc(f.name)}">${esc(f.name)}</a>${f.role ? `<small>${esc(f.role)}</small>` : ""}${f.bio ? `<p>${esc(f.bio)}</p>` : ""}${l ? `<a href="${esc(l)}" target="_blank" rel="noopener" class="link-arrow">${svg("linkedin")} LinkedIn</a>` : ""}</div></div>`;
+      }).join("")}</div></div>`;
+    }
   }
+
+  function syncCompareBtn() {
+    if (!window.Compare) return;
+    document.querySelectorAll("[data-cmp-btn]").forEach((b) => {
+      const on = Compare.has(b.dataset.cmpBtn);
+      b.textContent = on ? "Remove from compare" : "Add to compare";
+    });
+    document.querySelectorAll("input[data-cmp]").forEach((i) => { i.checked = Compare.has(i.dataset.cmp); });
+  }
+
   function bindCards(root, getRows) {
     const go = (el) => { const [type, rows] = getRows(); const r = rows.find((x) => x.name === el.dataset.name); if (r) openModal(r, type); };
-    root.addEventListener("click", (e) => { const el = e.target.closest(".item"); if (el) go(el); });
+    root.addEventListener("click", (e) => {
+      if (e.target.closest("a")) return;                                   /* chips are links */
+      const cb = e.target.closest("input[data-cmp]");
+      if (cb) { e.stopPropagation(); Compare.toggle(cb.dataset.cmp); syncCompareBtn(); return; }
+      if (e.target.closest("label.cmp")) return;
+      const el = e.target.closest(".item"); if (el) go(el);
+    });
     root.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target.classList.contains("item")) { e.preventDefault(); go(e.target); } });
   }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-cmp-btn]"); if (b && window.Compare) { Compare.toggle(b.dataset.cmpBtn); syncCompareBtn(); }
+  });
+  document.addEventListener("compare:change", syncCompareBtn);
 
   const count = (el, to) => {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches || to < 20) { el.textContent = to.toLocaleString("en-IN"); return; }
@@ -121,7 +188,7 @@
     return `<a class="card" href="${esc(u)}" ${/^https?:/.test(u) ? 'target="_blank" rel="noopener"' : ""} style="--c:var(--violet)">
       ${r.tag ? `<span class="chip" style="align-self:flex-start">${esc(r.tag)}</span>` : ""}
       <h3>${esc(r.title)}</h3><p>${esc(r.summary || "")}</p>
-      <small style="color:var(--muted);margin-top:auto">${esc(d.full)}</small></a>`;
+      <small style="color:var(--muted);margin-top:auto">${esc([r.source, d.full].filter(Boolean).join(" · "))}</small></a>`;
   };
 
   function newsletter() {
@@ -138,6 +205,8 @@
   /* =============================== DIRECTORY =============================== */
   async function directory() {
     let type = KEYS.includes(param("type")) ? param("type") : "startups";
+    let facet = Data.FACETS[param("f")] && param("v") ? { f: param("f"), v: param("v") } : null;
+    const openName = param("open");              /* read before the address bar is tidied */
     let rows = [], shown = 24;
     const PER = 24, grid = $("#grid"), meta = $("#meta");
     const f = { q: param("q"), sector: "", location: "", stage: "", sort: "az" };
@@ -146,48 +215,52 @@
     tabsEl.innerHTML = KEYS.map((k) => `<button class="tab" role="tab" data-k="${k}" aria-selected="${k === type}" style="--c:${D[k].color}"><i></i>${esc(D[k].label)}</button>`).join("");
 
     const fill = (sel, vals, label) => { const s = $(sel); s.innerHTML = `<option value="">${label}</option>` + vals.map((v) => `<option>${esc(v)}</option>`).join(""); s.value = ""; };
-    const uniq = (key) => [...new Set(rows.flatMap((r) => Data.split(r[key])))].sort((a, b) => a.localeCompare(b));
+    const uniq = (field) => [...new Map(rows.flatMap((r) => Data.facetValues(r, field)).map((v) => [Data.key(v), v])).values()].sort((a, b) => a.localeCompare(b));
 
-    async function switchType(t) {
-      type = t; shown = PER;
+    async function switchType(t, keepFacet) {
+      type = t; shown = PER; if (!keepFacet) facet = null;
       document.documentElement.style.setProperty("--dir", D[t].color);
       tabsEl.querySelectorAll(".tab").forEach((b) => b.setAttribute("aria-selected", b.dataset.k === t));
       $("#dtitle").textContent = D[t].label; $("#dblurb").textContent = D[t].blurb;
       grid.innerHTML = '<p class="empty">Loading…</p>';
       rows = (await Data.load(t)).rows;
-      fill("#fsector", uniq("sector"), "All sectors"); fill("#flocation", uniq("location"), "All locations"); fill("#fstage", uniq("stage"), "All stages");
+      fill("#fsector", uniq("sector"), "All sectors"); fill("#flocation", uniq("location"), "All cities"); fill("#fstage", uniq("stage"), "All stages");
       f.sector = f.location = f.stage = "";
       $("#fq").value = f.q;
       render();
-      const u = new URL(location); u.searchParams.set("type", t); u.searchParams.delete("open"); history.replaceState(null, "", u);
+      const u = new URL(location); u.searchParams.set("type", t); u.searchParams.delete("open");
+      if (!facet) { u.searchParams.delete("f"); u.searchParams.delete("v"); }
+      history.replaceState(null, "", u);
     }
 
     function render() {
       let list = rows.filter((r) =>
+        (!facet || Data.hasFacet(r, facet.f, facet.v)) &&
         (!f.q || hay(r).includes(f.q.toLowerCase())) &&
-        (!f.sector || Data.split(r.sector).includes(f.sector)) &&
-        (!f.location || Data.split(r.location).includes(f.location)) &&
-        (!f.stage || Data.split(r.stage).includes(f.stage)));
+        (!f.sector || Data.hasFacet(r, "sector", f.sector)) &&
+        (!f.location || Data.hasFacet(r, "location", f.location)) &&
+        (!f.stage || Data.hasFacet(r, "stage", f.stage)));
       if (f.sort === "az") list.sort((a, b) => a.name.localeCompare(b.name));
       if (f.sort === "new") list.sort((a, b) => Date.parse(b.added_on || 0) - Date.parse(a.added_on || 0));
-      meta.innerHTML = `<span>${list.length} ${esc(D[type].label)}${f.q ? ` matching “${esc(f.q)}”` : ""}</span>`;
+      const chip = facet ? `<span class="facet-active"><b>${esc(Data.FACETS[facet.f])}:</b> ${esc(facet.v)} <a href="directory.html?type=${type}" data-clear-facet aria-label="Remove this filter">×</a></span>` : "";
+      meta.innerHTML = `<span>${list.length} ${esc(D[type].label)}${f.q ? ` matching “${esc(f.q)}”` : ""}</span>${chip}`;
       grid.innerHTML = list.length
         ? list.slice(0, shown).map((r) => card(r, type)).join("")
         : `<div class="empty" style="grid-column:1/-1">No results. Clear a filter or try another word.</div>`;
       $("#more").style.display = list.length > shown ? "flex" : "none";
-      grid._list = list;
+      if (window.Compare) syncCompareBtn();
     }
 
     tabsEl.addEventListener("click", (e) => { const b = e.target.closest(".tab"); if (b) switchType(b.dataset.k); });
+    meta.addEventListener("click", (e) => { if (e.target.closest("[data-clear-facet]")) { e.preventDefault(); facet = null; const u = new URL(location); u.searchParams.delete("f"); u.searchParams.delete("v"); history.replaceState(null, "", u); render(); } });
     $("#fq").addEventListener("input", (e) => { f.q = e.target.value.trim(); shown = PER; render(); });
     [["#fsector", "sector"], ["#flocation", "location"], ["#fstage", "stage"], ["#fsort", "sort"]].forEach(([s, k]) => $(s).addEventListener("change", (e) => { f[k] = e.target.value; shown = PER; render(); }));
-    $("#fclear").addEventListener("click", () => { f.q = ""; f.sector = f.location = f.stage = ""; ["#fq", "#fsector", "#flocation", "#fstage"].forEach((s) => ($(s).value = "")); render(); });
+    $("#fclear").addEventListener("click", () => { f.q = ""; f.sector = f.location = f.stage = ""; facet = null; ["#fq", "#fsector", "#flocation", "#fstage"].forEach((s) => ($(s).value = "")); const u = new URL(location); u.searchParams.delete("f"); u.searchParams.delete("v"); history.replaceState(null, "", u); render(); });
     $("#more button").addEventListener("click", () => { shown += PER; render(); });
     bindCards(grid, () => [type, rows]);
 
-    await switchType(type);
-    const open = param("open");
-    if (open) { const r = rows.find((x) => x.name === open); if (r) openModal(r, type); }
+    await switchType(type, true);
+    if (openName) { const r = rows.find((x) => Data.key(x.name) === Data.key(openName)); if (r) openModal(r, type); }
   }
 
   /* =============================== SOLUTIONS =============================== */
@@ -223,7 +296,7 @@
     draw();
   }
 
-  /* =============================== BLOG / EVENTS / FAQ / ABOUT / PRICING =============================== */
+  /* =============================== BLOG / EVENTS / FAQ / ABOUT =============================== */
   async function blog() {
     const rows = (await Data.load("blog")).rows.sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
     $("#blog").innerHTML = rows.length ? rows.map(blogCard).join("") : '<p class="empty">No articles yet.</p>';
@@ -245,10 +318,6 @@
     const rows = (await Data.load("team")).rows, col = ["#ff5c5c", "#f5a200", "#7c4dff", "#00a99d", "#2f80ed", "#22a559"];
     $("#team").innerHTML = rows.map((r, i) => `<div class="card" style="--c:${col[i % 6]}">${avatar(r, col[i % 6])}<h3>${esc(r.name)}</h3><b style="color:${col[i % 6]};font-size:.9rem">${esc(r.role || "")}</b><p>${esc(r.bio || "")}</p>${safeUrl(r.linkedin) ? `<a class="link-arrow" href="${esc(safeUrl(r.linkedin))}" target="_blank" rel="noopener">${svg("linkedin")} LinkedIn</a>` : ""}</div>`).join("");
   }
-  function pricing() {
-    $("#plans").innerHTML = S.plans.map((p) => `<div class="card plan${p.featured ? " featured" : ""}" style="--c:${p.color}"><h3 style="color:${p.color}">${esc(p.name)}</h3><div class="price">${esc(p.price)}<small style="font:500 .95rem var(--body);color:var(--muted)"> ${esc(p.per)}</small></div>
-      <ul>${p.features.map((f) => `<li>${esc(f)}</li>`).join("")}</ul><a class="btn btn-color" style="--c:${p.color};margin-top:auto" href="${esc(p.link)}">${esc(p.cta)}</a></div>`).join("");
-  }
   function contact() {
     const f = $("#cform");
     if (!S.contactFormAction) { f.innerHTML = '<p class="empty" style="text-align:left">The contact form is not connected yet. Add your form endpoint in <code>js/config.js → contactFormAction</code>. Until then, use the details in the footer.</p>'; return; }
@@ -264,7 +333,117 @@
     addEventListener("hashchange", show); show();
   }
 
-  const map = { home, directory, solutions, benefits, blog, events, faq, about, pricing, contact, legal };
+  /* =============================== ADD STARTUP (form built into the site) =============================== */
+  function addstartup() {
+    const f = $("#sform"), msg = $("#smsg"), btn = $("#sbtn"), t0 = Date.now();
+    const connected = S.submitUrl && !/^PASTE_/i.test(S.submitUrl);
+    if (!connected) {
+      $("#snotice").hidden = false;
+      btn.disabled = true;
+    }
+
+    /* founders: repeatable rows */
+    const list = $("#founders-list"), MAXF = 5;
+    const row = (i) => `<fieldset class="frow"><legend>Founder ${i}</legend>
+      <label>Name${i === 1 ? " *" : ""}<input name="f_name" maxlength="80" ${i === 1 ? "required" : ""} autocomplete="off"></label>
+      <label>Role<input name="f_role" maxlength="80" placeholder="e.g. Co-founder &amp; CEO"></label>
+      <label>LinkedIn URL<input name="f_linkedin" type="url" maxlength="200" placeholder="https://www.linkedin.com/in/..."></label>
+      <label class="wide">Short bio<input name="f_bio" maxlength="300" placeholder="One line about their background"></label></fieldset>`;
+    const addRow = () => { const n = list.children.length + 1; if (n > MAXF) return; list.insertAdjacentHTML("beforeend", row(n)); $("#addf").hidden = n >= MAXF; };
+    addRow();
+    $("#addf").addEventListener("click", addRow);
+
+    const val = (n) => (f.elements[n] ? f.elements[n].value.trim() : "");
+    f.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.className = "smsg"; msg.textContent = "";
+      if (!connected) return;
+      if (val("company_site")) return;                              /* honeypot: bots fill this hidden field */
+      if (val("description").length < 40) { msg.className = "smsg err"; msg.textContent = "Please describe what the startup does in at least 40 characters."; f.elements.description.focus(); return; }
+      if (!f.elements.consent.checked) { msg.className = "smsg err"; msg.textContent = "Please tick the confirmation box."; return; }
+
+      const names = [...f.querySelectorAll('[name="f_name"]')], roles = [...f.querySelectorAll('[name="f_role"]')],
+        lis = [...f.querySelectorAll('[name="f_linkedin"]')], bios = [...f.querySelectorAll('[name="f_bio"]')];
+      const founders = names.map((n, i) => ({ name: n.value.trim(), role: roles[i].value.trim(), linkedin: lis[i].value.trim(), bio: bios[i].value.trim() })).filter((x) => x.name);
+      const fields = ["name", "website", "description", "competitive_edge", "business_model", "location", "founded", "funding", "stage", "team_size", "user_base", "sector", "tech", "competitors", "investors", "tags", "logo_url"];
+      const startup = {}; fields.forEach((k) => (startup[k] = val(k)));
+
+      btn.disabled = true; btn.textContent = "Sending…";
+      try {
+        /* text/plain keeps this a "simple" request, so the browser sends it without a pre-flight check */
+        await fetch(S.submitUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ startup, founders, contact_email: val("contact_email"), submitter_role: val("submitter_role"), consent: true, elapsed_ms: Date.now() - t0 }) });
+        f.hidden = true; $("#sdone").hidden = false; window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (err) {
+        msg.className = "smsg err"; msg.textContent = "Could not send. Check your internet connection and try again.";
+        btn.disabled = false; btn.textContent = "Submit startup";
+      }
+    });
+  }
+
+  /* =============================== COMPARE =============================== */
+  async function compare() {
+    const wrap = $("#cmp"), MAX = Compare.MAX;
+    const fromUrl = new URLSearchParams(location.search).getAll("n").slice(0, MAX);
+    const names = fromUrl.length ? fromUrl : Compare.get();
+    const all = (await Data.load("startups")).rows, fall = (await Data.load("founders")).rows;
+    const picked = names.map((n) => all.find((r) => Data.key(r.name) === Data.key(n))).filter(Boolean);
+
+    if (picked.length < 2) {
+      wrap.innerHTML = `<div class="empty-state"><h2>Pick at least two startups to compare</h2>
+        <p>${picked.length ? "You have 1 selected." : "Nothing selected yet."} Tick “Compare” on any startup card (up to ${MAX}), then come back here.</p>
+        <a class="btn btn-solid" href="directory.html?type=startups">Browse startups</a></div>`;
+      return;
+    }
+    const chips = (r, f) => Data.facetValues(r, f).map((v) => facetChip("startups", f, v)).join("") || "–";
+    const ROWS = [
+      ["About", (r) => esc(r.description || "–")],
+      ["Competitive edge", (r) => esc(r.competitive_edge || "–")],
+      ["Business model", (r) => esc(r.business_model || "–")],
+      ["Headquarters", (r) => esc(r.location || "–")],
+      ["Founded", (r) => esc(r.founded || "–")],
+      ["Funding", (r) => esc(r.funding || "–")],
+      ["Stage", (r) => (r.stage ? facetChip("startups", "stage", r.stage) : "–")],
+      ["Team size", (r) => esc(r.team_size || "–")],
+      ["Users / customers", (r) => esc(r.user_base || "–")],
+      ["Sector", (r) => `<div class="chips">${chips(r, "sector")}</div>`],
+      ["Underlying technology", (r) => `<div class="chips">${chips(r, "tech")}</div>`],
+      ["Key investors", (r) => `<div class="chips">${chips(r, "investors")}</div>`],
+      ["Primary competition", (r) => `<div class="chips">${chips(r, "competitors")}</div>`],
+      ["Founders", (r) => { const l = Data.foundersOf(fall, r.name); return esc(l.length ? l.map((x) => x.name + (x.role ? " (" + x.role + ")" : "")).join(", ") : r.founders || "–"); }],
+      ["Status", (r) => esc(r.status || "–")],
+      ["Website", (r) => (safeUrl(r.website) ? `<a class="link-arrow" href="${esc(safeUrl(r.website))}" target="_blank" rel="noopener">Visit ${svg("ext")}</a>` : "–")]
+    ];
+    const plain = (h) => h.replace(/<[^>]+>/g, "").trim();
+    let onlyDiff = false;
+    const draw = () => {
+      const head = picked.map((r) => `<th scope="col"><div class="chead">${avatar(r, D.startups.color)}<b>${esc(r.name)}</b>${r._derived ? "" : `<small>${esc(r.tagline || "")}</small>`}<button class="rm" data-rm="${esc(r.name)}" aria-label="Remove ${esc(r.name)}">Remove</button></div></th>`).join("");
+      const body = ROWS.map(([t, fn]) => {
+        const cells = picked.map((r) => fn(r)), same = new Set(cells.map(plain)).size === 1;
+        if (onlyDiff && same) return "";
+        return `<tr class="${same ? "" : "diff"}"><th scope="row">${t}</th>${cells.map((c) => `<td>${c}</td>`).join("")}</tr>`;
+      }).join("");
+      $("#cmp-table").innerHTML = `<table class="ctable"><thead><tr><th></th>${head}</tr></thead><tbody>${body}</tbody></table>`;
+    };
+    wrap.innerHTML = `<div class="cmp-tools">
+        <label class="switch"><input type="checkbox" id="onlydiff"> Show only differences</label>
+        <button class="btn btn-sm btn-ghost" id="share">Copy link to this comparison</button>
+        <button class="btn btn-sm btn-ghost" id="clearall">Clear selection</button><span id="shmsg" role="status"></span></div>
+      <div class="cmp-scroll" id="cmp-table"></div>`;
+    draw();
+    $("#onlydiff").addEventListener("change", (e) => { onlyDiff = e.target.checked; draw(); });
+    wrap.addEventListener("click", (e) => {
+      const rm = e.target.closest("[data-rm]");
+      if (rm) { Compare.remove(rm.dataset.rm); const i = picked.findIndex((r) => r.name === rm.dataset.rm); if (i > -1) picked.splice(i, 1); if (picked.length < 2) location.href = "compare.html"; else draw(); }
+    });
+    $("#clearall").addEventListener("click", () => { Compare.clear(); location.href = "compare.html"; });
+    $("#share").addEventListener("click", async () => {
+      const u = new URL(location.href.split("?")[0]); picked.forEach((r) => u.searchParams.append("n", r.name));
+      try { await navigator.clipboard.writeText(u.href); $("#shmsg").textContent = "Link copied."; } catch (e) { $("#shmsg").textContent = u.href; }
+    });
+  }
+
+  const map = { home, directory, solutions, benefits, blog, events, faq, about, contact, legal, addstartup, compare };
   const fn = map[document.body.dataset.page];
   if (fn) fn();
   window.U.pageHero = pageHero;

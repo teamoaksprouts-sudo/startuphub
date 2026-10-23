@@ -19,6 +19,7 @@ window.SITE = {
   /* Tab names inside that sheet (must match exactly, case-sensitive) */
   tabs: {
     startups:    "Startups",
+    founders:    "Founders",      // one row per founder, linked to a startup by "Startup Name"
     angels:      "Angels",
     vcs:         "VCs",
     incubators:  "Incubators",
@@ -35,8 +36,12 @@ window.SITE = {
   /* How long (minutes) a visitor's browser keeps data before re-reading the sheet */
   cacheMinutes: 5,
 
-  /* ---------- 3. LINKS YOU MUST ADD ---------- */
-  addStartupForm: "https://forms.gle/LvMYvoicmQQVG3Q29",   // "Add your startup" form (see README step 3)
+  /* ---------- 3. "ADD YOUR STARTUP" FORM (built into the website) ----------
+     Paste the Web app URL you get after deploying sheet-templates/Code.gs
+     (Apps Script → Deploy → New deployment → Web app). It looks like:
+     https://script.google.com/macros/s/AKfy.../exec
+     Until you paste it, the form on add-startup.html shows a "not connected" notice. */
+  submitUrl: "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE",
 
   /* Newsletter (optional). Leave action empty to hide the form. See README "Newsletter". */
   newsletter: { action: "", emailField: "entry.0000000000" },
@@ -68,17 +73,7 @@ window.SITE = {
     blog:      "Test1.com"
   },
 
-  copyrightName: "Oak Sprouts",       // shows as © 2026 Your Company Name
-
-  /* ---------- 6. PRICING PAGE (edit or delete plans) ---------- */
-  plans: [
-    { name: "Free",    price: "₹0",      per: "forever",  color: "#22A559",
-      features: ["Browse all directories", "Basic search & filters", "Add your startup"], cta: "Get started", link: "directory.html" },
-    { name: "Pro",     price: "₹999",    per: "per month", color: "#7C4DFF", featured: true,
-      features: ["Everything in Free", "Export lists to Excel", "Advanced filters", "Email support"], cta: "Contact us", link: "contact.html" },
-    { name: "Teams",   price: "Custom",  per: "",          color: "#FF5C5C",
-      features: ["Everything in Pro", "Data API access", "Custom dashboards", "Dedicated manager"], cta: "Talk to us", link: "contact.html" }
-  ]
+  copyrightName: "Oak Sprouts"       // shows as © 2026 Your Company Name
 };
 
 /* Directory definitions: colors + labels used all over the site. Safe to leave as is. */

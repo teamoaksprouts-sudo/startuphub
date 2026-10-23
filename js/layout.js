@@ -32,7 +32,6 @@
     { t: "Directories", mega: true },
     { t: "Solutions", href: "solutions.html" },
     { t: "Benefits", href: "benefits.html" },
-    { t: "Pricing", href: "pricing.html" },
     { t: "Events", href: "events.html" },
     { t: "Blog", href: "blog.html" },
     { t: "About", href: "about.html" }
@@ -44,14 +43,14 @@
     const links = nav.map((n) => n.mega
       ? `<div class="has-mega"><button class="nav-link" aria-expanded="false" aria-haspopup="true">${n.t}<svg viewBox="0 0 10 6" width="10" height="6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button><div class="mega">${mega}</div></div>`
       : `<a class="nav-link${page === n.href ? " on" : ""}" href="${n.href}">${n.t}</a>`).join("");
-    const addUrl = /^PASTE_/i.test(S.addStartupForm) ? "contact.html" : S.addStartupForm;
+    const addUrl = "add-startup.html";
     return `<header class="site-header" id="top">
       <div class="wrap bar">
         <a class="brand" href="index.html" aria-label="${esc(S.name)} home"><span class="mark"><i></i><i></i><i></i><i></i></span>${esc(S.logoText)}</a>
         <nav class="nav" id="nav" aria-label="Main">${links}
-          <a class="btn btn-sm btn-ghost nav-cta-m" href="${esc(addUrl)}" target="_blank" rel="noopener">Add your startup</a></nav>
+          <a class="btn btn-sm btn-ghost nav-cta-m" href="${esc(addUrl)}">Add your startup</a></nav>
         <div class="bar-right">
-          <a class="btn btn-sm btn-solid hide-m" href="${esc(addUrl)}" target="_blank" rel="noopener">Add your startup</a>
+          <a class="btn btn-sm btn-solid hide-m" href="${esc(addUrl)}">Add your startup</a>
           <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
         </div>
       </div></header>`;
@@ -83,9 +82,9 @@
           <p>${esc(S.description)}</p>
           <div class="socials">${social}</div>
         </div>
-        ${col("Company", [["About", "about.html"], ["Events", "events.html"], ["Team", "about.html#team-section"], ["FAQ", "faq.html"], ["Contact", "contact.html"]])}
+        ${col("Company", [["About", "about.html"], ["Events", "events.html"], ["Team", "about.html#team-section"], ["FAQ", "faq.html"], ["Add your startup", "add-startup.html"], ["Contact", "contact.html"]])}
         ${col("Directories", dirLinks)}
-        ${col("Resources", [["Blog", "blog.html"], ["Benefits", "benefits.html"], ["Pricing", "pricing.html"], ["Solutions", "solutions.html"], ["Terms", "legal.html#terms"], ["Privacy", "legal.html#privacy"]])}
+        ${col("Resources", [["Blog", "blog.html"], ["Benefits", "benefits.html"], ["Solutions", "solutions.html"], ["Terms", "legal.html#terms"], ["Privacy", "legal.html#privacy"]])}
 
         <!-- ============== CONTACT DETAILS: edit in js/config.js → contact { email, phone, whatsapp, address } ============== -->
         <div class="fcol fcontact"><h4>Get in touch</h4><ul>
