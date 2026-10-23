@@ -41,7 +41,7 @@ window.SITE = {
      (Apps Script → Deploy → New deployment → Web app). It looks like:
      https://script.google.com/macros/s/AKfy.../exec
      Until you paste it, the form on add-startup.html shows a "not connected" notice. */
-  submitUrl: "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE",
+  submitUrl: "https://script.google.com/macros/s/AKfycbyLJ4Q7m5QrFTHcAfhXuWiqrl6xnxjuO_MXmakY2gQIFLKRAQQFqF3X9buXQd1InWvb/exec",
 
   /* Newsletter (optional). Leave action empty to hide the form. See README "Newsletter". */
   newsletter: { action: "", emailField: "entry.0000000000" },
