@@ -38,10 +38,12 @@
     website_url: "website", site_url: "website", linkedin_url: "linkedin", logo: "logo_url",
     funding_stage: "stage", stage_focus: "stage",
     sector_focus: "sector", sectors: "sector", sectors_focus: "sector",
-    underlying_tech: "tech", technology: "tech"
+    underlying_tech: "tech", technology: "tech",
+    ministry_or_department: "ministry", notable_investments: "portfolio", notable_portfolio: "portfolio",
+    photo: "photo_url", picture: "photo_url", profile_image: "photo_url", profile_picture: "photo_url", avatar: "photo_url"
   };
   /* Founders tab uses its own mapping so "Startup Name" stays the link back to the startup. */
-  const ALIAS_FOUNDERS = { startup_name: "startup", startup: "startup", founder_name: "name", linkedin_url: "linkedin", photo_url: "photo_url" };
+  const ALIAS_FOUNDERS = { startup_name: "startup", startup: "startup", founder_name: "name", linkedin_url: "linkedin", photo_url: "photo_url", photo: "photo_url", picture: "photo_url" };
 
   const firstSentence = (d) => {
     const t = String(d || "").replace(/\s+/g, " ").trim();
@@ -112,7 +114,9 @@
   /* Fields people can click to see every startup with the same value */
   const FACETS = {
     sector: "Sector", tags: "Tag", tech: "Technology", competitors: "Competitor",
-    investors: "Investor", stage: "Stage", location: "City", founders: "Founder", status: "Status"
+    investors: "Investor", stage: "Stage", location: "City", founders: "Founder", status: "Status",
+    type: "Type", level: "Level", ministry: "Ministry", benefit_type: "Benefit type", loan_type: "Loan type",
+    parent_institution: "Parent institution", portfolio: "Portfolio company"
   };
   const facetValues = (r, f) => (f === "location" ? [String(r.location || "").split(",")[0].trim()].filter(Boolean) : split(r[f]));
   const hasFacet = (r, f, v) => { const k = key(v); return facetValues(r, f).some((x) => key(x) === k); };

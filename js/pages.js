@@ -7,9 +7,70 @@
   const hay = (r) => Object.values(r).join(" ").toLowerCase();
 
   /* ---------- shared bits ---------- */
-  const avatar = (r, color) => r.logo_url && safeUrl(r.logo_url)
-    ? `<span class="av" style="--c:${color}"><img src="${esc(safeUrl(r.logo_url))}" alt="" loading="lazy" onerror="this.parentNode.textContent='${esc(initials(r.name))}'"></span>`
-    : `<span class="av" style="--c:${color}">${esc(initials(r.name))}</span>`;
+  /* Picture for a row: a logo/photo link from the sheet if there is one, otherwise the website's own icon (favicon), otherwise initials. */
+  const imgOf = (r) => {
+    const keys = ["logo_url", "photo_url", "logo", "image_url", "image", "avatar", "img"]
+      .concat(Object.keys(r).filter((k) => /(^|_)(image|photo|picture|avatar|logo|pic|img)(_|$)/.test(k)));
+    for (const k of keys) { const u = U.img(r[k]); if (u) return { u, person: /photo|picture|avatar|pic/.test(k) }; }
+    const f = U.favicon(r.website || r.apply_url);
+    return f ? { u: f, fav: true } : null;
+  };
+  const avatar = (r, color) => {
+    const i = imgOf(r), ini = esc(initials(r.name || r.title || "?"));
+    if (!i) return `<span class="av" style="--c:${color}">${ini}</span>`;
+    return `<span class="av${i.person ? " ph" : ""}" style="--c:${color}"><img src="${esc(i.u)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-i="${ini}"${i.fav ? ' data-fav="1"' : ""} onerror="U.avFail(this)" onload="U.avLoad(this)"></span>`;
+  };
+
+  /* What each directory shows. Field names are the cleaned column headers from your sheet (see js/data.js). */
+  const SPEC = {
+    startups: {
+      chips: [["sector", 2], ["stage", 1], ["location", 1]], foot: [["funding"], ["founded", "Founded "]],
+      filters: [["sector", "All sectors"], ["location", "All cities"], ["stage", "All stages"]],
+      compare: [["About", "description"], ["Competitive edge", "competitive_edge"], ["Business model", "business_model"], ["Headquarters", "location"], ["Founded", "founded"], ["Funding", "funding"],
+        ["Stage", "stage", "chips"], ["Team size", "team_size"], ["Users / customers", "user_base"], ["Sector", "sector", "chips"], ["Underlying technology", "tech", "chips"],
+        ["Key investors", "investors", "chips"], ["Primary competition", "competitors", "chips"], ["Founders", "*founders"], ["Status", "status"], ["Website", "website", "link"]]
+    },
+    angels: {
+      chips: [["sector", 2], ["stage", 1], ["location", 1]], foot: [["cheque_size", "Cheque "]],
+      filters: [["sector", "All sectors"], ["location", "All cities"], ["stage", "All stages"]],
+      modal: { facts: [["Cheque size", "cheque_size"], ["Headquarters", "location"], ["Status", "status"]], text: [["About", "description"]],
+        chips: [["Type", "type"], ["Sector focus", "sector"], ["Stage focus", "stage"], ["Notable investments", "portfolio"], ["Tags", "tags"]] },
+      compare: [["About", "description"], ["Type", "type"], ["Headquarters", "location"], ["Cheque size", "cheque_size"], ["Sector focus", "sector", "chips"], ["Stage focus", "stage", "chips"],
+        ["Notable investments", "portfolio", "chips"], ["Status", "status"], ["LinkedIn", "linkedin", "link"]]
+    },
+    vcs: {
+      chips: [["sector", 2], ["stage", 1], ["location", 1]], foot: [["fund_size", "Fund "], ["cheque_size", "Cheque "]],
+      filters: [["sector", "All sectors"], ["location", "All cities"], ["stage", "All stages"]],
+      modal: { facts: [["Fund size", "fund_size"], ["Cheque size", "cheque_size"], ["Headquarters", "location"], ["Status", "status"]], text: [["About", "description"]],
+        chips: [["Type", "type"], ["Sector focus", "sector"], ["Stage focus", "stage"], ["Notable portfolio", "portfolio"], ["Tags", "tags"]] },
+      compare: [["About", "description"], ["Type", "type"], ["Fund size", "fund_size"], ["Cheque size", "cheque_size"], ["Headquarters", "location"], ["Sector focus", "sector", "chips"],
+        ["Stage focus", "stage", "chips"], ["Notable portfolio", "portfolio", "chips"], ["Status", "status"], ["Website", "website", "link"]]
+    },
+    incubators: {
+      chips: [["sector", 2], ["stage", 1], ["location", 1]], foot: [["programme_duration"], ["equity_taken", "Equity "]],
+      filters: [["sector", "All sectors"], ["location", "All cities"], ["stage", "All stages"]],
+      modal: { facts: [["Parent institution", "parent_institution"], ["Programme duration", "programme_duration"], ["Equity taken", "equity_taken"], ["Headquarters", "location"], ["Status", "status"]],
+        text: [["About", "description"], ["Funding support", "funding_support"]], chips: [["Type", "type"], ["Sector focus", "sector"], ["Stage focus", "stage"], ["Tags", "tags"]] },
+      compare: [["About", "description"], ["Type", "type"], ["Parent institution", "parent_institution"], ["Programme duration", "programme_duration"], ["Equity taken", "equity_taken"], ["Funding support", "funding_support"],
+        ["Headquarters", "location"], ["Sector focus", "sector", "chips"], ["Stage focus", "stage", "chips"], ["Status", "status"], ["Website", "website", "link"], ["Apply", "apply_url", "link"]]
+    },
+    govt: {
+      chips: [["level", 1], ["sector", 1], ["location", 1]], foot: [["benefit_amount"]],
+      filters: [["level", "All levels"], ["sector", "All sectors"], ["location", "All states"]],
+      modal: { facts: [["Ministry or department", "ministry"], ["State", "location"], ["Benefit amount", "benefit_amount"], ["Status", "status"]],
+        text: [["About", "description"], ["Eligibility", "eligibility"], ["How to apply", "how_to_apply"]], chips: [["Level", "level"], ["Benefit type", "benefit_type"], ["Sector focus", "sector"], ["Stage focus", "stage"], ["Tags", "tags"]] },
+      compare: [["About", "description"], ["Level", "level"], ["Ministry or department", "ministry"], ["State", "location"], ["Benefit type", "benefit_type"], ["Benefit amount", "benefit_amount"],
+        ["Eligibility", "eligibility"], ["How to apply", "how_to_apply"], ["Sector focus", "sector", "chips"], ["Stage focus", "stage", "chips"], ["Status", "status"], ["Apply", "apply_url", "link"], ["Website", "website", "link"]]
+    },
+    banks: {
+      chips: [["type", 1], ["loan_type", 1], ["location", 1]], foot: [["loan_range"], ["interest_rate_range"]],
+      filters: [["type", "All types"], ["loan_type", "All loan types"], ["location", "All cities"]],
+      modal: { facts: [["Product", "product_name"], ["Loan range", "loan_range"], ["Interest rate range", "interest_rate_range"], ["Collateral required", "collateral_required"], ["Headquarters", "location"], ["Status", "status"]],
+        text: [["About", "description"], ["Eligibility", "eligibility"]], chips: [["Type", "type"], ["Loan type", "loan_type"], ["Tags", "tags"]] },
+      compare: [["About", "description"], ["Type", "type"], ["Product", "product_name"], ["Loan type", "loan_type"], ["Loan range", "loan_range"], ["Interest rate range", "interest_rate_range"],
+        ["Collateral required", "collateral_required"], ["Eligibility", "eligibility"], ["Headquarters", "location"], ["Status", "status"], ["Apply", "apply_url", "link"], ["Website", "website", "link"]]
+    }
+  };
 
   /* A clickable chip that lists every item sharing this value (e.g. all startups funded by one investor) */
   const facetChip = (type, field, value, cls = "") =>
@@ -17,18 +78,14 @@
 
   const badStatus = (r) => /closed|inactive|shut|failed|defunct|acquired|dormant|expired|discontinued|wound/i.test(r.status || "");
 
-  const compareBox = (r, type) => (type === "startups" && window.Compare
-    ? `<label class="cmp" title="Add to compare (max ${Compare.MAX})"><input type="checkbox" data-cmp="${esc(r.name)}"${Compare.has(r.name) ? " checked" : ""}> Compare</label>` : "");
+  const compareBox = (r, type) => (window.Compare
+    ? `<label class="cmp" title="Add to compare (max ${Compare.MAX})"><input type="checkbox" data-cmp="${esc(r.name)}" data-type="${type}"${Compare.has(r.name, type) ? " checked" : ""}> Compare</label>` : "");
 
   function card(r, type) {
-    const c = D[type].color;
+    const c = D[type].color, sp = SPEC[type];
     const isNew = Data.daysAgo(r.added_on) <= 30;
-    const chips = [
-      ...Data.split(r.sector).slice(0, 2).map((x) => facetChip(type, "sector", x)),
-      r.stage ? facetChip(type, "stage", Data.split(r.stage)[0]) : "",
-      r.location ? facetChip(type, "location", Data.facetValues(r, "location")[0] || "", "plain") : ""
-    ].join("");
-    const facts = [r.funding, r.founded ? "Founded " + r.founded : ""].filter(Boolean).join(" · ");
+    const chips = sp.chips.map(([f, n]) => Data.facetValues(r, f).slice(0, n).map((v) => facetChip(type, f, v, f === "location" ? "plain" : "")).join("")).join("");
+    const facts = sp.foot.map(([f, pre]) => (r[f] ? (pre || "") + r[f] : "")).filter(Boolean).join(" · ");
     const inactive = badStatus(r);
     return `<article class="card item click" tabindex="0" role="button" data-name="${esc(r.name)}" style="--c:${c}">
       ${isNew ? '<span class="new">New</span>' : ""}
@@ -48,12 +105,9 @@
     return m;
   }
 
-  const SKIP = ["name", "tagline", "description", "approved", "visible", "featured", "logo_url", "added_on", "website", "linkedin", "tags", "_derived", "source_url", "last_verified", "timestamp", "sector", "stage", "location"];
-  const label = (k) => k.replace(/_/g, " ").replace(/^./, (x) => x.toUpperCase());
-
   async function openModal(r, type) {
     const c = D[type].color, m = ensureModal(), isS = type === "startups";
-    const web = safeUrl(r.website), li = safeUrl(r.linkedin);
+    const web = U.link(r.website), li = U.link(r.linkedin), ap = U.link(r.apply_url);
     const text = (title, v) => (v ? `<div class="blk"><h4>${title}</h4><p>${esc(v)}</p></div>` : "");
     const facet = (title, field) => {
       const vals = Data.facetValues(r, field);
@@ -68,18 +122,20 @@
         <div id="fx"></div>
         ${facet("Sector", "sector")}${facet("Underlying technology", "tech")}${facet("Key investors", "investors")}${facet("Primary competition", "competitors")}${facet("Tags", "tags")}`;
     } else {
-      const rows = Object.entries(r).filter(([k, v]) => v && !SKIP.includes(k)).map(([k, v]) => `<dt>${esc(label(k))}</dt><dd>${/^https?:\/\//i.test(v) && safeUrl(v) ? `<a class="link-arrow" href="${esc(safeUrl(v))}" target="_blank" rel="noopener">Open ${svg("ext")}</a>` : esc(v)}</dd>`).join("");
-      body = `${text("About", r.description)}${rows ? `<dl class="kv">${rows}</dl>` : ""}${facet("Sector", "sector")}${facet("Stage", "stage")}${facet("Location", "location")}${facet("Tags", "tags")}`;
+      const M = SPEC[type].modal;
+      const facts = M.facts.filter((x) => r[x[1]]).map((x) => `<dt>${x[0]}</dt><dd>${esc(r[x[1]])}</dd>`).join("");
+      body = `${M.text.map((x) => text(x[0], r[x[1]])).join("")}${facts ? `<dl class="kv">${facts}</dl>` : ""}${M.chips.map((x) => facet(x[0], x[1])).join("")}`;
     }
     $("#sheet").innerHTML = `<button class="x" aria-label="Close">×</button>
       <div style="display:flex;gap:14px;align-items:center">${avatar(r, c)}<span class="chip" style="--c:${c}">${esc(D[type].single)}</span>${badStatus(r) ? `<span class="chip warn">${esc(r.status)}</span>` : ""}</div>
       <h2>${esc(r.name)}</h2>${r._derived ? "" : `<p class="tag" style="color:var(--muted)">${esc(r.tagline || "")}</p>`}
       ${body}
       <div class="actions">
-        ${web ? `<a class="btn btn-color" style="--c:${c}" href="${esc(web)}" target="_blank" rel="noopener">Visit website ${svg("ext")}</a>` : ""}
+        ${ap ? `<a class="btn btn-color" style="--c:${c}" href="${esc(ap)}" target="_blank" rel="noopener">Apply ${svg("ext")}</a>` : ""}
+        ${web ? `<a class="btn ${ap ? "btn-ghost" : "btn-color"}" style="--c:${c}" href="${esc(web)}" target="_blank" rel="noopener">Visit website ${svg("ext")}</a>` : ""}
         ${li ? `<a class="btn btn-ghost" href="${esc(li)}" target="_blank" rel="noopener">${svg("linkedin")} LinkedIn</a>` : ""}
         ${["angels", "vcs", "incubators"].includes(type) ? `<a class="btn btn-ghost" href="${esc(Data.facetUrl("startups", "investors", r.name))}">Startups in our database backed by ${esc(r.name.length > 28 ? "them" : r.name)}</a>` : ""}
-        ${isS && window.Compare ? `<button class="btn btn-ghost" data-cmp-btn="${esc(r.name)}"></button>` : ""}
+        ${window.Compare ? `<button class="btn btn-ghost" data-cmp-btn="${esc(r.name)}" data-cmp-type="${type}"></button>` : ""}
       </div>`;
     m.classList.add("open");
     $(".x", m).focus();
@@ -91,8 +147,8 @@
       if (!fx || !m.classList.contains("open")) return;
       if (!list.length && r.founders) list = Data.split(r.founders).map((n) => ({ name: n }));
       if (list.length) fx.innerHTML = `<div class="blk"><h4>Founders</h4><div class="founders">${list.map((f) => {
-        const l = safeUrl(f.linkedin);
-        return `<div class="fcard"><span class="av" style="--c:${c}">${esc(initials(f.name))}</span><div><a class="fname" href="${esc(Data.facetUrl("startups", "founders", f.name))}" title="See all startups by ${esc(f.name)}">${esc(f.name)}</a>${f.role ? `<small>${esc(f.role)}</small>` : ""}${f.bio ? `<p>${esc(f.bio)}</p>` : ""}${l ? `<a href="${esc(l)}" target="_blank" rel="noopener" class="link-arrow">${svg("linkedin")} LinkedIn</a>` : ""}</div></div>`;
+        const l = U.link(f.linkedin);
+        return `<div class="fcard">${avatar(f, c)}<div><a class="fname" href="${esc(Data.facetUrl("startups", "founders", f.name))}" title="See all startups by ${esc(f.name)}">${esc(f.name)}</a>${f.role ? `<small>${esc(f.role)}</small>` : ""}${f.bio ? `<p>${esc(f.bio)}</p>` : ""}${l ? `<a href="${esc(l)}" target="_blank" rel="noopener" class="link-arrow">${svg("linkedin")} LinkedIn</a>` : ""}</div></div>`;
       }).join("")}</div></div>`;
     }
   }
@@ -100,10 +156,10 @@
   function syncCompareBtn() {
     if (!window.Compare) return;
     document.querySelectorAll("[data-cmp-btn]").forEach((b) => {
-      const on = Compare.has(b.dataset.cmpBtn);
+      const on = Compare.has(b.dataset.cmpBtn, b.dataset.cmpType);
       b.textContent = on ? "Remove from compare" : "Add to compare";
     });
-    document.querySelectorAll("input[data-cmp]").forEach((i) => { i.checked = Compare.has(i.dataset.cmp); });
+    document.querySelectorAll("input[data-cmp]").forEach((i) => { i.checked = Compare.has(i.dataset.cmp, i.dataset.type); });
   }
 
   function bindCards(root, getRows) {
@@ -111,14 +167,14 @@
     root.addEventListener("click", (e) => {
       if (e.target.closest("a")) return;                                   /* chips are links */
       const cb = e.target.closest("input[data-cmp]");
-      if (cb) { e.stopPropagation(); Compare.toggle(cb.dataset.cmp); syncCompareBtn(); return; }
+      if (cb) { e.stopPropagation(); Compare.toggle(cb.dataset.cmp, cb.dataset.type); syncCompareBtn(); return; }
       if (e.target.closest("label.cmp")) return;
       const el = e.target.closest(".item"); if (el) go(el);
     });
     root.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target.classList.contains("item")) { e.preventDefault(); go(e.target); } });
   }
   document.addEventListener("click", (e) => {
-    const b = e.target.closest("[data-cmp-btn]"); if (b && window.Compare) { Compare.toggle(b.dataset.cmpBtn); syncCompareBtn(); }
+    const b = e.target.closest("[data-cmp-btn]"); if (b && window.Compare) { Compare.toggle(b.dataset.cmpBtn, b.dataset.cmpType); syncCompareBtn(); }
   });
   document.addEventListener("compare:change", syncCompareBtn);
 
@@ -175,17 +231,22 @@
     const blog = (await Data.load("blog")).rows.sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, 4);
     $("#blog").innerHTML = blog.map(blogCard).join("");
 
-    /* clients */
-    const cl = (await Data.load("clients")).rows;
-    const pills = cl.map((r) => `<div class="logo-pill">${r.logo_url ? `<img src="${esc(safeUrl(r.logo_url))}" alt="${esc(r.name)}" loading="lazy">` : esc(r.name)}</div>`).join("");
-    $("#clients").innerHTML = `<div class="track">${pills}${pills}${pills}${pills}</div>`;
+    /* portfolio: every startup in the Startups tab (featured ones first), each tile opens that startup */
+    const pf = [...all.startups].sort((a, b) => (/^(yes|y|true|1)$/i.test(b.featured || "") ? 1 : 0) - (/^(yes|y|true|1)$/i.test(a.featured || "") ? 1 : 0)).slice(0, 40);
+    if (!pf.length) { $("#clients").closest("section").remove(); }
+    else {
+      const tile = (r, hide) => `<a class="pf-pill" href="directory.html?type=startups&open=${encodeURIComponent(r.name)}"${hide ? ' tabindex="-1" aria-hidden="true"' : ""} title="${esc(r.name)}">${avatar(r, D.startups.color)}<span>${esc(r.name)}</span></a>`;
+      const reps = Math.max(2, Math.ceil(12 / pf.length) * 2);              /* enough copies for a seamless loop */
+      $("#clients").innerHTML = `<div class="track">${pf.map((r) => tile(r)).join("")}${Array.from({ length: reps - 1 }, () => pf.map((r) => tile(r, true)).join("")).join("")}</div>`;
+    }
 
     newsletter();
   }
 
   const blogCard = (r) => {
-    const d = fmtDate(r.date), u = safeUrl(r.url) || "#";
-    return `<a class="card" href="${esc(u)}" ${/^https?:/.test(u) ? 'target="_blank" rel="noopener"' : ""} style="--c:var(--violet)">
+    const d = fmtDate(r.date), u = U.link(r.url) || safeUrl(r.url) || "#", im = U.img(r.image), src = esc(r.source || r.tag || "Article");
+    return `<a class="card blog" href="${esc(u)}" ${/^https?:/.test(u) ? 'target="_blank" rel="noopener"' : ""} style="--c:var(--violet)">
+      <div class="bimg${im ? "" : " ph"}">${im ? `<img src="${esc(im)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-s="${src}" onerror="this.parentNode.classList.add('ph');this.parentNode.textContent=this.dataset.s">` : src}</div>
       ${r.tag ? `<span class="chip" style="align-self:flex-start">${esc(r.tag)}</span>` : ""}
       <h3>${esc(r.title)}</h3><p>${esc(r.summary || "")}</p>
       <small style="color:var(--muted);margin-top:auto">${esc([r.source, d.full].filter(Boolean).join(" · "))}</small></a>`;
@@ -209,7 +270,7 @@
     const openName = param("open");              /* read before the address bar is tidied */
     let rows = [], shown = 24;
     const PER = 24, grid = $("#grid"), meta = $("#meta");
-    const f = { q: param("q"), sector: "", location: "", stage: "", sort: "az" };
+    const f = { q: param("q"), s: ["", "", ""], sort: "az" }, SLOTS = ["#fsector", "#flocation", "#fstage"];
 
     const tabsEl = $("#tabs");
     tabsEl.innerHTML = KEYS.map((k) => `<button class="tab" role="tab" data-k="${k}" aria-selected="${k === type}" style="--c:${D[k].color}"><i></i>${esc(D[k].label)}</button>`).join("");
@@ -224,8 +285,12 @@
       $("#dtitle").textContent = D[t].label; $("#dblurb").textContent = D[t].blurb;
       grid.innerHTML = '<p class="empty">Loading…</p>';
       rows = (await Data.load(t)).rows;
-      fill("#fsector", uniq("sector"), "All sectors"); fill("#flocation", uniq("location"), "All cities"); fill("#fstage", uniq("stage"), "All stages");
-      f.sector = f.location = f.stage = "";
+      const fl = SPEC[t].filters;
+      SLOTS.forEach((sel, i) => {                       /* each directory has its own three filters (e.g. banks: type, loan type, city) */
+        const el = $(sel), d = fl[i], vals = d ? uniq(d[0]) : [];
+        if (!d || !vals.length) { el.hidden = true; el.innerHTML = ""; } else { el.hidden = false; fill(sel, vals, d[1]); el.setAttribute("aria-label", d[1]); }
+      });
+      f.s = ["", "", ""];
       $("#fq").value = f.q;
       render();
       const u = new URL(location); u.searchParams.set("type", t); u.searchParams.delete("open");
@@ -237,9 +302,7 @@
       let list = rows.filter((r) =>
         (!facet || Data.hasFacet(r, facet.f, facet.v)) &&
         (!f.q || hay(r).includes(f.q.toLowerCase())) &&
-        (!f.sector || Data.hasFacet(r, "sector", f.sector)) &&
-        (!f.location || Data.hasFacet(r, "location", f.location)) &&
-        (!f.stage || Data.hasFacet(r, "stage", f.stage)));
+        SPEC[type].filters.every((d, i) => !f.s[i] || Data.hasFacet(r, d[0], f.s[i])));
       if (f.sort === "az") list.sort((a, b) => a.name.localeCompare(b.name));
       if (f.sort === "new") list.sort((a, b) => Date.parse(b.added_on || 0) - Date.parse(a.added_on || 0));
       const chip = facet ? `<span class="facet-active"><b>${esc(Data.FACETS[facet.f])}:</b> ${esc(facet.v)} <a href="directory.html?type=${type}" data-clear-facet aria-label="Remove this filter">×</a></span>` : "";
@@ -254,8 +317,9 @@
     tabsEl.addEventListener("click", (e) => { const b = e.target.closest(".tab"); if (b) switchType(b.dataset.k); });
     meta.addEventListener("click", (e) => { if (e.target.closest("[data-clear-facet]")) { e.preventDefault(); facet = null; const u = new URL(location); u.searchParams.delete("f"); u.searchParams.delete("v"); history.replaceState(null, "", u); render(); } });
     $("#fq").addEventListener("input", (e) => { f.q = e.target.value.trim(); shown = PER; render(); });
-    [["#fsector", "sector"], ["#flocation", "location"], ["#fstage", "stage"], ["#fsort", "sort"]].forEach(([s, k]) => $(s).addEventListener("change", (e) => { f[k] = e.target.value; shown = PER; render(); }));
-    $("#fclear").addEventListener("click", () => { f.q = ""; f.sector = f.location = f.stage = ""; facet = null; ["#fq", "#fsector", "#flocation", "#fstage"].forEach((s) => ($(s).value = "")); const u = new URL(location); u.searchParams.delete("f"); u.searchParams.delete("v"); history.replaceState(null, "", u); render(); });
+    SLOTS.forEach((sel, i) => $(sel).addEventListener("change", (e) => { f.s[i] = e.target.value; shown = PER; render(); }));
+    $("#fsort").addEventListener("change", (e) => { f.sort = e.target.value; shown = PER; render(); });
+    $("#fclear").addEventListener("click", () => { f.q = ""; f.s = ["", "", ""]; facet = null; ["#fq", "#fsector", "#flocation", "#fstage"].forEach((s) => ($(s).value = "")); const u = new URL(location); u.searchParams.delete("f"); u.searchParams.delete("v"); history.replaceState(null, "", u); render(); });
     $("#more button").addEventListener("click", () => { shown += PER; render(); });
     bindCards(grid, () => [type, rows]);
 
@@ -278,37 +342,10 @@
       <ul style="list-style:none;padding:0;display:grid;gap:12px">${s.items.map((i) => `<li style="display:flex;gap:12px;align-items:center;background:#fff;padding:14px 16px;border-radius:14px;border:1px solid var(--line)"><span style="width:10px;height:10px;border-radius:50%;background:${s.c};flex:none"></span>${i}</li>`).join("")}</ul></div></div></section>`).join("");
   }
 
-  /* =============================== BENEFITS =============================== */
-  async function benefits() {
-    const rows = (await Data.load("benefits")).rows, cats = [...new Set(rows.map((r) => r.category).filter(Boolean))];
-    const palette = ["#ff5c5c", "#f5a200", "#7c4dff", "#00a99d", "#2f80ed", "#22a559"];
-    let cur = "";
-    const draw = () => {
-      $("#btabs").innerHTML = ["All", ...cats].map((c, i) => `<button class="tab" aria-selected="${(c === "All" && !cur) || c === cur}" data-c="${c === "All" ? "" : esc(c)}" style="--c:${palette[i % 6]}"><i></i>${esc(c)}</button>`).join("");
-      $("#blist").innerHTML = rows.filter((r) => !cur || r.category === cur).map((r) => {
-        const c = palette[Math.max(0, cats.indexOf(r.category)) % 6], u = safeUrl(r.url) || "#";
-        return `<a class="card" style="--c:${c}" href="${esc(u)}" ${/^https?:/.test(u) ? 'target="_blank" rel="noopener"' : ""}>
-          <span class="chip" style="align-self:flex-start">${esc(r.category || "Offer")}</span><h3>${esc(r.partner)}</h3>
-          <b style="color:${c}">${esc(r.offer || "")}</b><p>${esc(r.description || "")}</p><span class="link-arrow" style="margin-top:auto;color:${c}">Claim offer ${svg("arrow")}</span></a>`;
-      }).join("");
-    };
-    $("#btabs").addEventListener("click", (e) => { const b = e.target.closest(".tab"); if (b) { cur = b.dataset.c; draw(); } });
-    draw();
-  }
-
-  /* =============================== BLOG / EVENTS / FAQ / ABOUT =============================== */
+  /* =============================== BLOG / FAQ / ABOUT =============================== */
   async function blog() {
     const rows = (await Data.load("blog")).rows.sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
     $("#blog").innerHTML = rows.length ? rows.map(blogCard).join("") : '<p class="empty">No articles yet.</p>';
-  }
-  async function events() {
-    const rows = (await Data.load("events")).rows, now = Date.now() - 864e5;
-    const up = rows.filter((r) => Date.parse(r.date) >= now).sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
-    const past = rows.filter((r) => !(Date.parse(r.date) >= now)).sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
-    const row = (r, c) => { const d = fmtDate(r.date), u = safeUrl(r.url) || "#"; return `<a class="card" style="--c:${c}" href="${esc(u)}" ${/^https?:/.test(u) ? 'target="_blank" rel="noopener"' : ""}><div class="row"><div class="date-badge">${d.day}<small>${d.mon}</small></div><div><h3>${esc(r.title)}</h3><small style="color:var(--muted)">${esc(r.location || "")}</small></div></div><p>${esc(r.description || "")}</p></a>`; };
-    $("#up").innerHTML = up.length ? up.map((r) => row(r, "#7c4dff")).join("") : '<p class="empty" style="grid-column:1/-1">No upcoming events right now. Check back soon.</p>';
-    $("#past").innerHTML = past.map((r) => row(r, "#9aa0bd")).join("");
-    if (!past.length) $("#pastwrap").remove();
   }
   async function faq() {
     const rows = (await Data.load("faq")).rows;
@@ -316,16 +353,23 @@
   }
   async function about() {
     const rows = (await Data.load("team")).rows, col = ["#ff5c5c", "#f5a200", "#7c4dff", "#00a99d", "#2f80ed", "#22a559"];
-    $("#team").innerHTML = rows.map((r, i) => `<div class="card" style="--c:${col[i % 6]}">${avatar(r, col[i % 6])}<h3>${esc(r.name)}</h3><b style="color:${col[i % 6]};font-size:.9rem">${esc(r.role || "")}</b><p>${esc(r.bio || "")}</p>${safeUrl(r.linkedin) ? `<a class="link-arrow" href="${esc(safeUrl(r.linkedin))}" target="_blank" rel="noopener">${svg("linkedin")} LinkedIn</a>` : ""}</div>`).join("");
+    $("#team").innerHTML = rows.map((r, i) => `<div class="card" style="--c:${col[i % 6]}">${avatar(r, col[i % 6])}<h3>${esc(r.name)}</h3><b style="color:${col[i % 6]};font-size:.9rem">${esc(r.role || "")}</b><p>${esc(r.bio || "")}</p>${U.link(r.linkedin) ? `<a class="link-arrow" href="${esc(U.link(r.linkedin))}" target="_blank" rel="noopener">${svg("linkedin")} LinkedIn</a>` : ""}</div>`).join("");
   }
   function contact() {
-    const f = $("#cform");
-    if (!S.contactFormAction) { f.innerHTML = '<p class="empty" style="text-align:left">The contact form is not connected yet. Add your form endpoint in <code>js/config.js → contactFormAction</code>. Until then, use the details in the footer.</p>'; return; }
-    f.action = S.contactFormAction; f.method = "POST";
+    const f = $("#cform"), msg = $("#cmsg"), btn = $("#cbtn"), t0 = Date.now();
+    const connected = S.submitUrl && !/^PASTE_/i.test(S.submitUrl);
+    if (!connected) { $("#cnotice").hidden = false; btn.disabled = true; }
     f.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      try { const r = await fetch(S.contactFormAction, { method: "POST", body: new FormData(f), headers: { Accept: "application/json" } }); $("#cmsg").textContent = r.ok ? "Thanks, we'll reply soon." : "Could not send. Please email us instead."; if (r.ok) f.reset(); }
-      catch { $("#cmsg").textContent = "Could not send. Please email us instead."; }
+      e.preventDefault(); msg.className = "smsg"; msg.textContent = "";
+      if (!connected || f.elements.company_site.value) return;                      /* hidden field: only bots fill it */
+      btn.disabled = true; btn.textContent = "Sending…";
+      const wait = 3300 - (Date.now() - t0); if (wait > 0) await new Promise((r) => setTimeout(r, wait));   /* the server ignores anything faster than 3 s (bots) */
+      try {
+        await fetch(S.submitUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ kind: "contact", name: f.elements.name.value.trim(), email: f.elements.email.value.trim(), message: f.elements.message.value.trim(), elapsed_ms: Date.now() - t0 }) });
+        f.reset(); msg.className = "smsg ok"; msg.textContent = "Thanks, your message is on its way. We'll reply by email.";
+      } catch (err) { msg.className = "smsg err"; msg.textContent = "Could not send. Check your internet connection or email us instead."; }
+      btn.disabled = false; btn.textContent = "Send message";
     });
   }
   function legal() {
@@ -369,6 +413,7 @@
       const startup = {}; fields.forEach((k) => (startup[k] = val(k)));
 
       btn.disabled = true; btn.textContent = "Sending…";
+      const wait = 6300 - (Date.now() - t0); if (wait > 0) await new Promise((r) => setTimeout(r, wait));   /* the server ignores anything faster than 6 s (bots) */
       try {
         /* text/plain keeps this a "simple" request, so the browser sends it without a pre-flight check */
         await fetch(S.submitUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -384,44 +429,35 @@
   /* =============================== COMPARE =============================== */
   async function compare() {
     const wrap = $("#cmp"), MAX = Compare.MAX;
+    const t = D[param("t")] ? param("t") : Compare.type(), sp = SPEC[t];
+    $("#ctitle").textContent = "Compare " + D[t].label;
     const fromUrl = new URLSearchParams(location.search).getAll("n").slice(0, MAX);
-    const names = fromUrl.length ? fromUrl : Compare.get();
-    const all = (await Data.load("startups")).rows, fall = (await Data.load("founders")).rows;
+    const names = fromUrl.length ? fromUrl : (Compare.type() === t ? Compare.get() : []);
+    const all = (await Data.load(t)).rows, fall = t === "startups" ? (await Data.load("founders")).rows : [];
     const picked = names.map((n) => all.find((r) => Data.key(r.name) === Data.key(n))).filter(Boolean);
+    const back = "compare.html?t=" + t;
 
     if (picked.length < 2) {
-      wrap.innerHTML = `<div class="empty-state"><h2>Pick at least two startups to compare</h2>
-        <p>${picked.length ? "You have 1 selected." : "Nothing selected yet."} Tick “Compare” on any startup card (up to ${MAX}), then come back here.</p>
-        <a class="btn btn-solid" href="directory.html?type=startups">Browse startups</a></div>`;
+      wrap.innerHTML = `<div class="empty-state"><h2>Pick at least two to compare</h2>
+        <p>${picked.length ? "You have 1 selected." : "Nothing selected yet."} Tick “Compare” on any card in ${esc(D[t].label)} (up to ${MAX}), then come back here.</p>
+        <a class="btn btn-solid" href="directory.html?type=${t}">Browse ${esc(D[t].label)}</a></div>`;
       return;
     }
-    const chips = (r, f) => Data.facetValues(r, f).map((v) => facetChip("startups", f, v)).join("") || "–";
-    const ROWS = [
-      ["About", (r) => esc(r.description || "–")],
-      ["Competitive edge", (r) => esc(r.competitive_edge || "–")],
-      ["Business model", (r) => esc(r.business_model || "–")],
-      ["Headquarters", (r) => esc(r.location || "–")],
-      ["Founded", (r) => esc(r.founded || "–")],
-      ["Funding", (r) => esc(r.funding || "–")],
-      ["Stage", (r) => (r.stage ? facetChip("startups", "stage", r.stage) : "–")],
-      ["Team size", (r) => esc(r.team_size || "–")],
-      ["Users / customers", (r) => esc(r.user_base || "–")],
-      ["Sector", (r) => `<div class="chips">${chips(r, "sector")}</div>`],
-      ["Underlying technology", (r) => `<div class="chips">${chips(r, "tech")}</div>`],
-      ["Key investors", (r) => `<div class="chips">${chips(r, "investors")}</div>`],
-      ["Primary competition", (r) => `<div class="chips">${chips(r, "competitors")}</div>`],
-      ["Founders", (r) => { const l = Data.foundersOf(fall, r.name); return esc(l.length ? l.map((x) => x.name + (x.role ? " (" + x.role + ")" : "")).join(", ") : r.founders || "–"); }],
-      ["Status", (r) => esc(r.status || "–")],
-      ["Website", (r) => (safeUrl(r.website) ? `<a class="link-arrow" href="${esc(safeUrl(r.website))}" target="_blank" rel="noopener">Visit ${svg("ext")}</a>` : "–")]
-    ];
+    const chips = (r, f) => Data.facetValues(r, f).map((v) => facetChip(t, f, v)).join("") || "–";
+    const ROWS = sp.compare.map(([title, f, kind]) => [title, (r) => {
+      if (f === "*founders") { const l = Data.foundersOf(fall, r.name); return esc(l.length ? l.map((x) => x.name + (x.role ? " (" + x.role + ")" : "")).join(", ") : r.founders || "–"); }
+      if (kind === "chips") return `<div class="chips">${chips(r, f)}</div>`;
+      if (kind === "link") { const u = U.link(r[f]); return u ? `<a class="link-arrow" href="${esc(u)}" target="_blank" rel="noopener">${title === "Apply" ? "Apply" : title === "LinkedIn" ? "Open" : "Visit"} ${svg("ext")}</a>` : "–"; }
+      return esc(r[f] || "–");
+    }]);
     const plain = (h) => h.replace(/<[^>]+>/g, "").trim();
     let onlyDiff = false;
     const draw = () => {
-      const head = picked.map((r) => `<th scope="col"><div class="chead">${avatar(r, D.startups.color)}<b>${esc(r.name)}</b>${r._derived ? "" : `<small>${esc(r.tagline || "")}</small>`}<button class="rm" data-rm="${esc(r.name)}" aria-label="Remove ${esc(r.name)}">Remove</button></div></th>`).join("");
-      const body = ROWS.map(([t, fn]) => {
+      const head = picked.map((r) => `<th scope="col"><div class="chead">${avatar(r, D[t].color)}<b>${esc(r.name)}</b>${r._derived ? "" : `<small>${esc(r.tagline || "")}</small>`}<button class="rm" data-rm="${esc(r.name)}" aria-label="Remove ${esc(r.name)}">Remove</button></div></th>`).join("");
+      const body = ROWS.map(([title, fn]) => {
         const cells = picked.map((r) => fn(r)), same = new Set(cells.map(plain)).size === 1;
         if (onlyDiff && same) return "";
-        return `<tr class="${same ? "" : "diff"}"><th scope="row">${t}</th>${cells.map((c) => `<td>${c}</td>`).join("")}</tr>`;
+        return `<tr class="${same ? "" : "diff"}"><th scope="row">${title}</th>${cells.map((c) => `<td>${c}</td>`).join("")}</tr>`;
       }).join("");
       $("#cmp-table").innerHTML = `<table class="ctable"><thead><tr><th></th>${head}</tr></thead><tbody>${body}</tbody></table>`;
     };
@@ -434,16 +470,16 @@
     $("#onlydiff").addEventListener("change", (e) => { onlyDiff = e.target.checked; draw(); });
     wrap.addEventListener("click", (e) => {
       const rm = e.target.closest("[data-rm]");
-      if (rm) { Compare.remove(rm.dataset.rm); const i = picked.findIndex((r) => r.name === rm.dataset.rm); if (i > -1) picked.splice(i, 1); if (picked.length < 2) location.href = "compare.html"; else draw(); }
+      if (rm) { Compare.remove(rm.dataset.rm); const i = picked.findIndex((r) => r.name === rm.dataset.rm); if (i > -1) picked.splice(i, 1); if (picked.length < 2) location.href = back; else draw(); }
     });
-    $("#clearall").addEventListener("click", () => { Compare.clear(); location.href = "compare.html"; });
+    $("#clearall").addEventListener("click", () => { Compare.clear(); location.href = back; });
     $("#share").addEventListener("click", async () => {
-      const u = new URL(location.href.split("?")[0]); picked.forEach((r) => u.searchParams.append("n", r.name));
+      const u = new URL(location.href.split("?")[0]); u.searchParams.set("t", t); picked.forEach((r) => u.searchParams.append("n", r.name));
       try { await navigator.clipboard.writeText(u.href); $("#shmsg").textContent = "Link copied."; } catch (e) { $("#shmsg").textContent = u.href; }
     });
   }
 
-  const map = { home, directory, solutions, benefits, blog, events, faq, about, contact, legal, addstartup, compare };
+  const map = { home, directory, solutions, blog, faq, about, contact, legal, addstartup, compare };
   const fn = map[document.body.dataset.page];
   if (fn) fn();
   window.U.pageHero = pageHero;

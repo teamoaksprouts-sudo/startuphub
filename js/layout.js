@@ -5,7 +5,34 @@
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const safeUrl = (u) => (/^(https?:|mailto:|tel:|#|[\w./-]+\.html)/i.test(u || "") ? u : "");
   const initials = (n) => String(n).replace(/\(.*?\)/g, "").trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-  window.U = { $, esc, safeUrl, initials };
+  /* Turns whatever was pasted into a sheet cell into a usable image link (adds https://, understands Google Drive and Dropbox links). */
+  const img = (u) => {
+    u = String(u || "").trim();
+    if (!u) return "";
+    if (u.startsWith("//")) u = "https:" + u;
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(u)) { if (!/^[\w-]+(\.[\w-]+)+(\/|$)/.test(u)) return ""; u = "https://" + u; }
+    if (!/^https?:\/\//i.test(u)) return "";
+    const d = u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:[^#]*&)?id=)([\w-]+)/i);
+    if (d) return "https://drive.google.com/thumbnail?id=" + d[1] + "&sz=w400";
+    if (/dropbox\.com/i.test(u)) { u = u.replace(/([?&])(dl|raw)=\d/g, "$1").replace(/[?&]+$/, "").replace("?&", "?"); return u + (u.includes("?") ? "&" : "?") + "raw=1"; }
+    return u;
+  };
+  /* The small icon a website shows in the browser tab (used as the logo when no logo link is given) */
+  const favicon = (site) => {
+    let u = String(site || "").trim(); if (!u) return "";
+    if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+    try { const h = new URL(u).hostname; return h.includes(".") ? "https://www.google.com/s2/favicons?sz=128&domain=" + encodeURIComponent(h) : ""; } catch (e) { return ""; }
+  };
+  /* A website or profile link from a sheet cell: adds https:// when it was left off */
+  const link = (u) => {
+    u = String(u || "").trim();
+    if (!u) return "";
+    if (/^(https?:|mailto:|tel:)/i.test(u)) return u;
+    return /^[\w-]+(\.[\w-]+)+(\/|$)/.test(u) ? "https://" + u : "";
+  };
+  const avFail = (el) => { const p = el.parentNode; if (p) p.textContent = el.dataset.i || ""; };
+  const avLoad = (el) => { if (el.dataset.fav && el.naturalWidth < 24) avFail(el); };
+  window.U = { $, esc, safeUrl, initials, img, favicon, link, avFail, avLoad };
 
   const ICON = {
     linkedin: '<path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.75h4V21H3zM9.75 9.75h3.8v1.55h.05c.53-1 1.82-2.05 3.75-2.05 4 0 4.75 2.63 4.75 6.05V21h-4v-5.1c0-1.22-.02-2.78-1.7-2.78-1.7 0-1.96 1.33-1.96 2.69V21h-4z"/>',
@@ -31,10 +58,9 @@
   const nav = [
     { t: "Directories", mega: true },
     { t: "Solutions", href: "solutions.html" },
-    { t: "Benefits", href: "benefits.html" },
-    { t: "Events", href: "events.html" },
     { t: "Blog", href: "blog.html" },
-    { t: "About", href: "about.html" }
+    { t: "About", href: "about.html" },
+    { t: "Contact us", href: "contact.html" }
   ];
 
   function header() {
@@ -65,10 +91,11 @@
         ? `<li><a href="${esc(safeUrl(href))}" ${/^https?:/.test(href) ? 'target="_blank" rel="noopener"' : ""}>${svg(icon)}<span>${esc(val)}</span></a></li>`
         : `<li class="is-empty" title="Add this in js/config.js → contact.${label}">${svg(icon)}<span>Add your ${label} (js/config.js)</span></li>`;
     };
+    const web = (u) => (/^[a-z][a-z0-9+.-]*:/i.test(u) ? u : "https://" + u);
     const social = ["linkedin", "twitter", "instagram", "facebook", "youtube", "discord", "blog"].map((k) => {
       if (!s[k] && hide) return "";
       return s[k]
-        ? `<a href="${esc(safeUrl(s[k]))}" target="_blank" rel="noopener" aria-label="${k}" class="soc">${svg(k)}</a>`
+        ? `<a href="${esc(safeUrl(web(s[k])))}" target="_blank" rel="noopener" aria-label="${k}" class="soc">${svg(k)}</a>`
         : `<span class="soc is-empty" title="Add your ${k} link in js/config.js → social.${k}" aria-label="${k} (not set)">${svg(k)}</span>`;
     }).join("");
     const wa = c.whatsapp ? "https://wa.me/" + String(c.whatsapp).replace(/\D/g, "") : "";
@@ -82,9 +109,9 @@
           <p>${esc(S.description)}</p>
           <div class="socials">${social}</div>
         </div>
-        ${col("Company", [["About", "about.html"], ["Events", "events.html"], ["Team", "about.html#team-section"], ["FAQ", "faq.html"], ["Add your startup", "add-startup.html"], ["Contact", "contact.html"]])}
+        ${col("Company", [["About", "about.html"], ["Team", "about.html#team-section"], ["FAQ", "faq.html"], ["Add your startup", "add-startup.html"], ["Contact", "contact.html"]])}
         ${col("Directories", dirLinks)}
-        ${col("Resources", [["Blog", "blog.html"], ["Benefits", "benefits.html"], ["Solutions", "solutions.html"], ["Terms", "legal.html#terms"], ["Privacy", "legal.html#privacy"]])}
+        ${col("Resources", [["Blog", "blog.html"], ["Solutions", "solutions.html"], ["Terms", "legal.html#terms"], ["Privacy", "legal.html#privacy"]])}
 
         <!-- ============== CONTACT DETAILS: edit in js/config.js → contact { email, phone, whatsapp, address } ============== -->
         <div class="fcol fcontact"><h4>Get in touch</h4><ul>
