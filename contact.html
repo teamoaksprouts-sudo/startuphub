@@ -12,12 +12,14 @@
 <main>
   <div class="page-hero wrap"><h1 style="font-size:clamp(2.1rem,4.6vw,3.4rem)">Contact us</h1><p class="lead">Questions, corrections or partnership ideas? Send a note.</p></div>
   <section style="padding-top:12px"><div class="wrap" style="max-width:640px">
+    <p class="empty" id="cnotice" hidden style="text-align:left">The contact form is not connected yet. Paste your Apps Script web app link into <code>submitUrl</code> in <code>js/config.js</code>. Until then, use the details in the footer.</p>
     <form class="stack" id="cform">
-      <input name="name" required placeholder="Your name" aria-label="Your name">
-      <input name="email" type="email" required placeholder="Your email" aria-label="Your email">
-      <textarea name="message" required placeholder="How can we help?" aria-label="Message"></textarea>
-      <button class="btn btn-solid" type="submit">Send message</button>
-      <div id="cmsg" role="status"></div>
+      <input name="name" required maxlength="80" placeholder="Your name" aria-label="Your name" autocomplete="name">
+      <input name="email" type="email" required maxlength="160" placeholder="Your email" aria-label="Your email" autocomplete="email">
+      <textarea name="message" required minlength="10" maxlength="2000" placeholder="How can we help?" aria-label="Message"></textarea>
+      <input name="company_site" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+      <button class="btn btn-solid" type="submit" id="cbtn">Send message</button>
+      <div id="cmsg" class="smsg" role="status"></div>
     </form>
   </div></section>
 </main>
