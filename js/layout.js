@@ -32,7 +32,14 @@
   };
   const avFail = (el) => { const p = el.parentNode; if (p) p.textContent = el.dataset.i || ""; };
   const avLoad = (el) => { if (el.dataset.fav && el.naturalWidth < 24) avFail(el); };
-  window.U = { $, esc, safeUrl, initials, img, favicon, link, avFail, avLoad };
+  /* Text colour (ink or white) that reads best on a flat colour field */
+  const on = (hex) => {
+    const n = parseInt(String(hex).replace("#", "").padEnd(6, "0").slice(0, 6), 16);
+    const c = [n >> 16 & 255, n >> 8 & 255, n & 255].map((v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); });
+    const L = .2126 * c[0] + .7152 * c[1] + .0722 * c[2];
+    return (L + .05) / .0585 >= 1.05 / (L + .05) ? "#14172e" : "#ffffff";
+  };
+  window.U = { $, esc, safeUrl, initials, img, favicon, link, on, avFail, avLoad };
 
   const ICON = {
     linkedin: '<path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.75h4V21H3zM9.75 9.75h3.8v1.55h.05c.53-1 1.82-2.05 3.75-2.05 4 0 4.75 2.63 4.75 6.05V21h-4v-5.1c0-1.22-.02-2.78-1.7-2.78-1.7 0-1.96 1.33-1.96 2.69V21h-4z"/>',
@@ -124,7 +131,7 @@
       </div>
       <div class="fbot"><span>© ${new Date().getFullYear()} ${esc(S.copyrightName)}. All rights reserved.</span>
         <a href="#top" class="totop">Back to top</a></div>
-    </div></footer>`;
+    </div><div class="wrap"><div class="fmark" aria-hidden="true">${esc(S.logoText)}</div></div></footer>`;
   }
 
   /* ------------------------------ BOOT ------------------------------ */
@@ -151,5 +158,25 @@
   /* Notice banner when still on sample data */
   if (!Data.isConfigured()) {
     document.body.insertAdjacentHTML("afterbegin", '<div class="sample-bar">Showing sample data. Connect your Google Sheet in <code>js/config.js</code> to show your own.</div>');
+  }
+
+  /* ------------------------------ MOTION: parts of each section rise in, once ------------------------------ */
+  if ("IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.documentElement.classList.add("js");
+    const R = ".sec-head,.card,.stat,.chapter,.page-hero h1,.page-hero p,.hero h1,.hero .lead,.hero-actions,.console,details,.panel,.bigcta-note,.toolbar,.meta,.prose>*,form.stack,.cmp-tools,.fbrand,.fcol";
+    const done = new WeakSet();
+    const io = new IntersectionObserver((es) => es.forEach((e) => {
+      if (!e.isIntersecting) return;
+      io.unobserve(e.target); e.target.classList.add("in");
+      setTimeout(() => { e.target.removeAttribute("data-r"); e.target.classList.remove("in"); e.target.style.removeProperty("--d"); }, 1000);   /* hand the element back to its hover styles */
+    }), { threshold: 0.1, rootMargin: "0px 0px -5% 0px" });
+    let n = 0;
+    const arm = () => document.querySelectorAll(R).forEach((el) => {
+      if (done.has(el)) return; done.add(el);
+      el.setAttribute("data-r", ""); el.style.setProperty("--d", (n++ % 4) * 70 + "ms"); io.observe(el);
+    });
+    let q; new MutationObserver(() => { cancelAnimationFrame(q); q = requestAnimationFrame(arm); }).observe(document.body, { childList: true, subtree: true });
+    arm();
+    setTimeout(() => document.querySelectorAll("[data-r]").forEach((el) => el.classList.add("in")), 4000);   /* safety: never leave content hidden */
   }
 })();

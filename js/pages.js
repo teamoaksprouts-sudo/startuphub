@@ -137,6 +137,7 @@
         ${["angels", "vcs", "incubators"].includes(type) ? `<a class="btn btn-ghost" href="${esc(Data.facetUrl("startups", "investors", r.name))}">Startups in our database backed by ${esc(r.name.length > 28 ? "them" : r.name)}</a>` : ""}
         ${window.Compare ? `<button class="btn btn-ghost" data-cmp-btn="${esc(r.name)}" data-cmp-type="${type}"></button>` : ""}
       </div>`;
+    $("#sheet").style.setProperty("--c", c);
     m.classList.add("open");
     $(".x", m).focus();
     syncCompareBtn();
@@ -195,14 +196,14 @@
     /* stats */
     $("#stats").innerHTML = KEYS.map((k) => {
       const added = all[k].filter((r) => Data.daysAgo(r.added_on) <= 30).length;
-      return `<div class="stat" style="--c:${D[k].color}"><b data-n="${all[k].length}">0</b><span>${esc(D[k].label)}</span>${added ? `<small>+${added} last month</small>` : "<small>&nbsp;</small>"}</div>`;
+      return `<a class="stat" href="directory.html?type=${k}" style="--c:${D[k].color};--on:${U.on(D[k].color)}"><b data-n="${all[k].length}">0</b><span>${esc(D[k].label)}</span>${added ? `<small>+${added} last month</small>` : "<small>&nbsp;</small>"}</a>`;
     }).join("");
     document.querySelectorAll("#stats b").forEach((b) => count(b, +b.dataset.n));
 
     /* search console */
     let cur = "startups";
     const tabs = $("#tabs"), box = $("#q"), res = $("#res"), sbox = $(".sbox");
-    tabs.innerHTML = KEYS.map((k) => `<button class="tab" role="tab" aria-selected="${k === cur}" data-k="${k}" style="--c:${D[k].color}"><i></i>${esc(D[k].label)}</button>`).join("");
+    tabs.innerHTML = KEYS.map((k) => `<button class="tab" role="tab" aria-selected="${k === cur}" data-k="${k}" style="--c:${D[k].color};--on:${U.on(D[k].color)}"><i></i>${esc(D[k].label)}</button>`).join("");
     const paint = () => {
       const q = box.value.trim().toLowerCase();
       sbox.style.setProperty("--sc", D[cur].color);
@@ -210,17 +211,17 @@
       if (q) rows = rows.filter((r) => hay(r).includes(q));
       const top = rows.slice(0, 6);
       res.innerHTML = top.length
-        ? top.map((r) => `<a class="res" href="directory.html?type=${cur}&open=${encodeURIComponent(r.name)}">${avatar(r, D[cur].color)}<span><b>${esc(r.name)}</b><small>${esc([r.sector, r.location].filter(Boolean).join(" · "))}</small></span><span class="go">${svg("arrow")}</span></a>`).join("") +
+        ? top.map((r) => `<a class="res" href="directory.html?type=${cur}&open=${encodeURIComponent(r.name)}">${avatar(r, D[cur].color)}<b>${esc(r.name)}</b><span class="sub">${esc([r.sector, r.location].filter(Boolean).join(" · "))}</span><span class="go">${svg("arrow")}</span></a>`).join("") +
           `<a class="link-arrow res" href="directory.html?type=${cur}&q=${encodeURIComponent(q)}">See all ${rows.length} in ${esc(D[cur].label)} ${svg("arrow")}</a>`
         : `<div class="empty">Nothing found for “${esc(q)}”. Try a sector or city.</div>`;
     };
     tabs.addEventListener("click", (e) => { const b = e.target.closest(".tab"); if (!b) return; cur = b.dataset.k; tabs.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", t === b)); paint(); });
     box.addEventListener("input", paint); paint();
 
-    /* products */
-    $("#products").innerHTML = KEYS.map((k) => `<a class="card prod" href="directory.html?type=${k}" style="--c:${D[k].color}">
-      <div><span class="big">${esc(D[k].label)}</span><p style="margin-top:8px">${esc(D[k].blurb)}</p></div>
-      <span class="link-arrow" style="color:${D[k].color}">Explore ${all[k].length} ${svg("arrow")}</span></a>`).join("");
+    /* directories: one full-width flat colour band each */
+    $("#products").innerHTML = KEYS.map((k) => `<a class="chapter" href="directory.html?type=${k}" style="--c:${D[k].color};--on:${U.on(D[k].color)}">
+      <span class="big">${esc(D[k].label)}</span><p>${esc(D[k].blurb)}</p>
+      <span class="go"><span>Explore ${all[k].length}</span>${svg("arrow")}</span></a>`).join("");
 
     /* featured startups */
     const feat = all.startups.filter((r) => /^(yes|y|true|1)$/i.test(r.featured || "")), pick = (feat.length ? feat : all.startups).slice(0, 6);
@@ -236,7 +237,7 @@
     if (!pf.length) { $("#clients").closest("section").remove(); }
     else {
       const tile = (r, hide) => `<a class="pf-pill" href="directory.html?type=startups&open=${encodeURIComponent(r.name)}"${hide ? ' tabindex="-1" aria-hidden="true"' : ""} title="${esc(r.name)}">${avatar(r, D.startups.color)}<span>${esc(r.name)}</span></a>`;
-      const reps = Math.max(2, Math.ceil(12 / pf.length) * 2);              /* enough copies for a seamless loop */
+      const reps = Math.max(2, Math.ceil(12 / pf.length) * 2);              /* enough copies to fill the loop */
       $("#clients").innerHTML = `<div class="track">${pf.map((r) => tile(r)).join("")}${Array.from({ length: reps - 1 }, () => pf.map((r) => tile(r, true)).join("")).join("")}</div>`;
     }
 
@@ -273,14 +274,14 @@
     const f = { q: param("q"), s: ["", "", ""], sort: "az" }, SLOTS = ["#fsector", "#flocation", "#fstage"];
 
     const tabsEl = $("#tabs");
-    tabsEl.innerHTML = KEYS.map((k) => `<button class="tab" role="tab" data-k="${k}" aria-selected="${k === type}" style="--c:${D[k].color}"><i></i>${esc(D[k].label)}</button>`).join("");
+    tabsEl.innerHTML = KEYS.map((k) => `<button class="tab" role="tab" data-k="${k}" aria-selected="${k === type}" style="--c:${D[k].color};--on:${U.on(D[k].color)}"><i></i>${esc(D[k].label)}</button>`).join("");
 
     const fill = (sel, vals, label) => { const s = $(sel); s.innerHTML = `<option value="">${label}</option>` + vals.map((v) => `<option>${esc(v)}</option>`).join(""); s.value = ""; };
     const uniq = (field) => [...new Map(rows.flatMap((r) => Data.facetValues(r, field)).map((v) => [Data.key(v), v])).values()].sort((a, b) => a.localeCompare(b));
 
     async function switchType(t, keepFacet) {
       type = t; shown = PER; if (!keepFacet) facet = null;
-      document.documentElement.style.setProperty("--dir", D[t].color);
+      document.documentElement.style.setProperty("--dir", D[t].color); document.documentElement.style.setProperty("--dir-on", U.on(D[t].color));
       tabsEl.querySelectorAll(".tab").forEach((b) => b.setAttribute("aria-selected", b.dataset.k === t));
       $("#dtitle").textContent = D[t].label; $("#dblurb").textContent = D[t].blurb;
       grid.innerHTML = '<p class="empty">Loading…</p>';
@@ -333,13 +334,13 @@
     { id: "investors", t: "For investors", c: "#f5a200", p: "Scan startups by sector, stage and city, and keep your portfolio visible.", items: ["Filter startups by sector and stage", "Spot newly added companies every month", "Showcase your portfolio", "Reach founders directly"], link: ["startups", "Scan startups"] },
     { id: "incubators", t: "For incubators & accelerators", c: "#00a99d", p: "Reach high-potential startups and showcase your cohort.", items: ["Scan startups to invite", "Publish your programme", "Highlight your portfolio", "Track the ecosystem around you"], link: ["incubators", "See incubators"] },
     { id: "orgs", t: "For organisations", c: "#2f80ed", p: "Find partners for innovation and keep a pulse on the ecosystem.", items: ["Curated lists by sector", "Co-create custom dashboards", "Showcase corporate programmes", "Data support on request"], link: ["govt", "See schemes"] },
-    { id: "researchers", t: "For researchers, policy makers & students", c: "#7c4dff", p: "Fresh, structured data on startups and funding.", items: ["Up-to-date directory data", "Trend articles in the blog", "Prepare for placements and interviews", "Ask for custom datasets"], link: ["vcs", "Explore VCs"] }
+    { id: "researchers", t: "For researchers & students", c: "#7c4dff", p: "Fresh, structured data on startups and funding.", items: ["Up-to-date directory data", "Trend articles in the blog", "Prepare for placements and interviews", "Ask for custom datasets"], link: ["vcs", "Explore VCs"] }
   ];
   function solutions() {
-    $("#sol").innerHTML = SOLUTIONS.map((s) => `<section id="${s.id}" style="padding:36px 0"><div class="card" style="--c:${s.c};border-color:color-mix(in srgb,${s.c} 40%,#fff);background:color-mix(in srgb,${s.c} 5%,#fff);padding:clamp(24px,4vw,44px)">
-      <div class="grid g2" style="align-items:center"><div><h2 style="color:${s.c}">${s.t}</h2><p class="lead" style="margin:12px 0 22px">${s.p}</p>
-      <a class="btn btn-color" style="--c:${s.c}" href="directory.html?type=${s.link[0]}">${s.link[1]} ${svg("arrow")}</a></div>
-      <ul style="list-style:none;padding:0;display:grid;gap:12px">${s.items.map((i) => `<li style="display:flex;gap:12px;align-items:center;background:#fff;padding:14px 16px;border-radius:14px;border:1px solid var(--line)"><span style="width:10px;height:10px;border-radius:50%;background:${s.c};flex:none"></span>${i}</li>`).join("")}</ul></div></div></section>`).join("");
+    $("#sol").innerHTML = SOLUTIONS.map((s) => `<section id="${s.id}" style="padding:36px 0"><div class="card" style="--c:${s.c};background:${s.c};color:${U.on(s.c)};padding:clamp(24px,4vw,56px)">
+      <div class="grid g2" style="align-items:center"><div><h2>${s.t}</h2><p class="lead" style="margin:12px 0 22px;color:inherit">${s.p}</p>
+      <a class="btn btn-solid" href="directory.html?type=${s.link[0]}">${s.link[1]} ${svg("arrow")}</a></div>
+      <ul style="list-style:none;padding:0;display:grid;gap:12px">${s.items.map((i) => `<li style="display:flex;gap:12px;align-items:center;background:#fff;color:var(--ink);padding:16px 18px"><span style="width:12px;height:12px;background:${s.c};flex:none"></span>${i}</li>`).join("")}</ul></div></div></section>`).join("");
   }
 
   /* =============================== BLOG / FAQ / ABOUT =============================== */
@@ -353,7 +354,7 @@
   }
   async function about() {
     const rows = (await Data.load("team")).rows, col = ["#ff5c5c", "#f5a200", "#7c4dff", "#00a99d", "#2f80ed", "#22a559"];
-    $("#team").innerHTML = rows.map((r, i) => `<div class="card" style="--c:${col[i % 6]}">${avatar(r, col[i % 6])}<h3>${esc(r.name)}</h3><b style="color:${col[i % 6]};font-size:.9rem">${esc(r.role || "")}</b><p>${esc(r.bio || "")}</p>${U.link(r.linkedin) ? `<a class="link-arrow" href="${esc(U.link(r.linkedin))}" target="_blank" rel="noopener">${svg("linkedin")} LinkedIn</a>` : ""}</div>`).join("");
+    $("#team").innerHTML = rows.map((r, i) => `<div class="card" style="--c:${col[i % 6]}">${avatar(r, col[i % 6])}<h3>${esc(r.name)}</h3><b>${esc(r.role || "")}</b><p>${esc(r.bio || "")}</p>${U.link(r.linkedin) ? `<a class="link-arrow" href="${esc(U.link(r.linkedin))}" target="_blank" rel="noopener">${svg("linkedin")} LinkedIn</a>` : ""}</div>`).join("");
   }
   function contact() {
     const f = $("#cform"), msg = $("#cmsg"), btn = $("#cbtn"), t0 = Date.now();
