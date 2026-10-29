@@ -4,16 +4,16 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Contact</title>
 <meta name="description" content="Get in touch.">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://api.fontshare.com"><link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=roundo@400,500,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body data-page="contact">
 <main>
-  <div class="page-hero wrap"><h1 style="font-size:clamp(2.1rem,4.6vw,3.4rem)">Contact us</h1><p class="lead">Questions, corrections or partnership ideas? Send a note.</p></div>
-  <section style="padding-top:12px"><div class="wrap" style="max-width:640px">
-    <p class="empty" id="cnotice" hidden style="text-align:left">The contact form is not connected yet. Paste your Apps Script web app link into <code>submitUrl</code> in <code>js/config.js</code>. Until then, use the details in the footer.</p>
-    <form class="stack" id="cform">
+  <div class="page-hero wrap"><h1>Contact us</h1><p class="lead">Questions, corrections or partnership ideas? Send a note.</p></div>
+  <section style="padding-top:12px"><div class="wrap">
+    <p class="notice" id="cnotice" hidden>The contact form is not connected yet. Paste your Apps Script web app link into <code>submitUrl</code> in <code>js/config.js</code>. Until then, use the details in the footer.</p>
+    <form class="stack" id="cform" style="max-width:720px;margin-top:16px">
       <input name="name" required maxlength="80" placeholder="Your name" aria-label="Your name" autocomplete="name">
       <input name="email" type="email" required maxlength="160" placeholder="Your email" aria-label="Your email" autocomplete="email">
       <textarea name="message" required minlength="10" maxlength="2000" placeholder="How can we help?" aria-label="Message"></textarea>
