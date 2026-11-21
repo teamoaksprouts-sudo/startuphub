@@ -7,9 +7,32 @@
 <link rel="preconnect" href="https://api.fontshare.com"><link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
 <link href="https://api.fontshare.com/v2/css?f[]=roundo@400,500,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head>
 <body data-page="home">
 <main>
+
+  <!-- SPACE HERO: dark opening chapter. The camera flies forward as you scroll; everything below is the white site. -->
+  <section class="space" id="space" aria-label="Welcome to StartupDuniya">
+    <div class="space-pin">
+      <canvas class="space-canvas" id="space-canvas" aria-hidden="true"></canvas>
+      <div class="space-copy">
+        <img class="space-logo" src="img/logo.png" alt="" width="84" height="68">
+        <p class="space-kicker">Startup informed. Startup smart.</p>
+        <p class="space-title" role="heading" aria-level="2">StartupDuniya</p>
+        <div class="space-slides">
+          <p class="space-slide on">Where India's founders, investors and ideas meet.</p>
+          <p class="space-slide">Startups, angels, VCs, incubators, govt schemes and banks.</p>
+          <p class="space-slide">All free. All in one search.</p>
+        </div>
+        <div class="space-actions">
+          <a class="btn btn-color" style="--c:#ff6b1a" href="directory.html">Explore directories</a>
+          <a class="btn btn-light" href="add-startup.html">Add your startup</a>
+        </div>
+      </div>
+      <div class="space-prog" aria-hidden="true"><span>Scroll</span><span class="space-bar"><i></i></span><span class="space-count">01 / 03</span></div>
+    </div>
+  </section>
 
   <!-- HERO: white, one huge line, the live search, and the six directory counts as colour tiles -->
   <section class="hero">
@@ -41,7 +64,7 @@
       <div class="sec-head"><div><h2>Built for everyone in the ecosystem</h2><p>Pick the role that fits you and jump straight to what helps most.</p></div></div>
       <div class="grid g3">
         <a class="card adv" style="--c:#f5a200" href="solutions.html#investors"><h3>Screen startups efficiently</h3><p><b>For investors.</b> Filter by sector, stage and city and see what's new each month.</p></a>
-        <a class="card adv" style="--c:#ff5c5c" href="solutions.html#startups"><h3>Reach the right investors</h3><p><b>For startups.</b> Browse angels, VCs and funding agencies that match your stage.</p></a>
+        <a class="card adv" style="--c:#ff6b1a" href="solutions.html#startups"><h3>Reach the right investors</h3><p><b>For startups.</b> Browse angels, VCs and funding agencies that match your stage.</p></a>
         <a class="card adv" style="--c:#00a99d" href="solutions.html#incubators"><h3>Find high-potential startups</h3><p><b>For incubators.</b> Scan the landscape and showcase your own programme.</p></a>
         <a class="card adv" style="--c:#7c4dff" href="solutions.html#researchers"><h3>Work with fresh data</h3><p><b>For researchers.</b> Structured, regularly updated records on startups and funding.</p></a>
         <a class="card adv" style="--c:#2f80ed" href="solutions.html#orgs"><h3>Find partners for innovation</h3><p><b>For organisations.</b> Trends, curated lists and custom dashboards on request.</p></a>
@@ -74,7 +97,7 @@
 
   <!-- PORTFOLIO (every startup in your Startups tab) -->
   <section style="padding:clamp(56px,7vw,110px) 0">
-    <div class="wrap"><div class="sec-head"><div><h2>Our portfolio</h2><p>Startups listed on StartupHub. Click one to see its profile.</p></div></div></div>
+    <div class="wrap"><div class="sec-head"><div><h2>Our portfolio</h2><p>Startups listed on StartupDuniya. Click one to see its profile.</p></div></div></div>
     <div class="marquee" id="clients" aria-label="Startups in our portfolio"></div>
   </section>
 
@@ -83,7 +106,7 @@
     <div class="wrap">
       <div class="cta">
         <div><h2>Stay in the loop, skip the noise</h2><p>Real insights on startups and funding, straight to your inbox.</p></div>
-        <div><form class="nl" id="nl"><input type="email" name="email" required placeholder="you@example.com" aria-label="Email address"><button class="btn btn-color" style="--c:#ff5c5c">Subscribe</button></form><div class="nl-msg" id="nl-msg" role="status"></div></div>
+        <div><form class="nl" id="nl"><input type="email" name="email" required placeholder="you@example.com" aria-label="Email address"><button class="btn btn-color" style="--c:#ff6b1a">Subscribe</button></form><div class="nl-msg" id="nl-msg" role="status"></div></div>
       </div>
     </div>
   </section>
@@ -102,5 +125,6 @@
 <script src="js/compare.js"></script>
 <script src="js/layout.js"></script>
 <script src="js/pages.js"></script>
+<script src="js/hero.js" defer></script>
 </body>
 </html>
