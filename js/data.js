@@ -101,7 +101,7 @@
       try { sessionStorage.setItem(ck, JSON.stringify({ t: Date.now(), rows })); } catch (e) {}
       return { rows, live: true };
     } catch (err) {
-      console.warn("[StartupHub] Could not read tab '" + S.tabs[key] + "':", err.message, "→ using sample data");
+      console.warn("[StartupDuniya] Could not read tab '" + S.tabs[key] + "':", err.message, "→ using sample data");
       /* An optional tab (like Founders) that is missing should be empty, not sample data, once the sheet is connected. */
       return key === "founders" ? { rows: [], live: true } : sample();
     }

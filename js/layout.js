@@ -39,6 +39,9 @@
     const L = .2126 * c[0] + .7152 * c[1] + .0722 * c[2];
     return (L + .05) / .0585 >= 1.05 / (L + .05) ? "#14172e" : "#ffffff";
   };
+  /* "StartupDuniya" -> Startup + coloured Duniya */
+  const wordmark = (t) => { const m = /^(.*?)(Duniya)$/.exec(t || ""); return m && m[1] ? esc(m[1]) + "<span>" + m[2] + "</span>" : esc(t); };
+  window.wordmark = wordmark;
   window.U = { $, esc, safeUrl, initials, img, favicon, link, on, avFail, avLoad };
 
   const ICON = {
@@ -79,7 +82,7 @@
     const addUrl = "add-startup.html";
     return `<header class="site-header" id="top">
       <div class="wrap bar">
-        <a class="brand" href="index.html" aria-label="${esc(S.name)} home"><span class="mark"><i></i><i></i><i></i><i></i></span>${esc(S.logoText)}</a>
+        <a class="brand" href="index.html" aria-label="${esc(S.name)} home"><img class="logo-img" src="img/logo.png" alt="" width="40" height="33"><span class="brand-t">${wordmark(S.logoText)}</span></a>
         <nav class="nav" id="nav" aria-label="Main">${links}
           <a class="btn btn-sm btn-ghost nav-cta-m" href="${esc(addUrl)}">Add your startup</a></nav>
         <div class="bar-right">
@@ -112,7 +115,7 @@
     return `<footer class="site-footer"><div class="wrap">
       <div class="ftop">
         <div class="fbrand">
-          <a class="brand" href="index.html"><span class="mark"><i></i><i></i><i></i><i></i></span>${esc(S.logoText)}</a>
+          <a class="brand" href="index.html"><img class="logo-img" src="img/logo.png" alt="" width="40" height="33"><span class="brand-t">${wordmark(S.logoText)}</span></a>
           <p>${esc(S.description)}</p>
           <div class="socials">${social}</div>
         </div>
@@ -135,7 +138,8 @@
   }
 
   /* ------------------------------ BOOT ------------------------------ */
-  document.title = (document.title && !/^\s*$/.test(document.title) ? document.title + " · " : "") + S.name;
+  [["icon","img/favicon-32.png","image/png"],["apple-touch-icon","img/apple-touch-icon.png",""]].forEach(([r,h,t]) => { if (!document.querySelector('link[rel="'+r+'"]')) { const l = document.createElement("link"); l.rel = r; l.href = h; if (t) l.type = t; document.head.appendChild(l); } });
+    document.title = (document.title && !/^\s*$/.test(document.title) ? document.title + " · " : "") + S.name;
   document.body.insertAdjacentHTML("afterbegin", header());
   document.body.insertAdjacentHTML("beforeend", footer());
 

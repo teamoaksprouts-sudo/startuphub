@@ -330,7 +330,7 @@
 
   /* =============================== SOLUTIONS =============================== */
   const SOLUTIONS = [
-    { id: "startups", t: "For startups & founders", c: "#ff5c5c", p: "Find investors, programmes and funding that fit your stage.", items: ["Browse angels, VCs and networks", "Shortlist incubators and accelerators", "Discover government schemes and loans", "Get your startup listed and discovered"], link: ["angels", "Find angels"] },
+    { id: "startups", t: "For startups & founders", c: "#ff6b1a", p: "Find investors, programmes and funding that fit your stage.", items: ["Browse angels, VCs and networks", "Shortlist incubators and accelerators", "Discover government schemes and loans", "Get your startup listed and discovered"], link: ["angels", "Find angels"] },
     { id: "investors", t: "For investors", c: "#f5a200", p: "Scan startups by sector, stage and city, and keep your portfolio visible.", items: ["Filter startups by sector and stage", "Spot newly added companies every month", "Showcase your portfolio", "Reach founders directly"], link: ["startups", "Scan startups"] },
     { id: "incubators", t: "For incubators & accelerators", c: "#00a99d", p: "Reach high-potential startups and showcase your cohort.", items: ["Scan startups to invite", "Publish your programme", "Highlight your portfolio", "Track the ecosystem around you"], link: ["incubators", "See incubators"] },
     { id: "orgs", t: "For organisations", c: "#2f80ed", p: "Find partners for innovation and keep a pulse on the ecosystem.", items: ["Curated lists by sector", "Co-create custom dashboards", "Showcase corporate programmes", "Data support on request"], link: ["govt", "See schemes"] },
@@ -353,7 +353,7 @@
     $("#faq").innerHTML = rows.map((r) => `<details><summary>${esc(r.question)}</summary><p>${esc(r.answer)}</p></details>`).join("");
   }
   async function about() {
-    const rows = (await Data.load("team")).rows, col = ["#ff5c5c", "#f5a200", "#7c4dff", "#00a99d", "#2f80ed", "#22a559"];
+    const rows = (await Data.load("team")).rows, col = ["#ff6b1a", "#f5a200", "#7c4dff", "#00a99d", "#2f80ed", "#22a559"];
     $("#team").innerHTML = rows.map((r, i) => `<div class="card" style="--c:${col[i % 6]}">${avatar(r, col[i % 6])}<h3>${esc(r.name)}</h3><b>${esc(r.role || "")}</b><p>${esc(r.bio || "")}</p>${U.link(r.linkedin) ? `<a class="link-arrow" href="${esc(U.link(r.linkedin))}" target="_blank" rel="noopener">${svg("linkedin")} LinkedIn</a>` : ""}</div>`).join("");
   }
   function contact() {
