@@ -56,7 +56,8 @@
     scene.fog = new THREE.FogExp2(0x000000, 0.00025);
     const camera = new THREE.PerspectiveCamera(75, W() / H(), 0.1, 2000);
     camera.position.set(0, 30, 300);
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: !small, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: !small, alpha: false });
+    renderer.setClearColor(0x0b0d1c, 1);   /* opaque canvas: a see-through one can white-out under bright additive glow */
     renderer.setSize(W(), H(), false);
     renderer.setPixelRatio(Math.min(devicePixelRatio, small ? 1.5 : 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.55;
@@ -64,7 +65,7 @@
     if (composer) {
       comp = new composer.EffectComposer(renderer);
       comp.addPass(new composer.RenderPass(scene, camera));
-      comp.addPass(new composer.UnrealBloomPass(new THREE.Vector2(W(), H()), 0.8, 0.4, 0.85));
+      comp.addPass(new composer.UnrealBloomPass(new THREE.Vector2(W(), H()), 0.55, 0.4, 0.88));
     }
 
     /* stars: three shells that rotate slowly at different speeds */
@@ -86,7 +87,7 @@
         vertexShader: `attribute float size; attribute vec3 color; varying vec3 vColor; uniform float time; uniform float depth;
           void main(){ vColor=color; vec3 p=position; float a=time*0.05*(1.0-depth*0.3);
             mat2 r=mat2(cos(a),-sin(a),sin(a),cos(a)); p.xy=r*p.xy;
-            vec4 mv=modelViewMatrix*vec4(p,1.0); gl_PointSize=size*(300.0/-mv.z); gl_Position=projectionMatrix*mv; }`,
+            vec4 mv=modelViewMatrix*vec4(p,1.0); gl_PointSize=clamp(size*(300.0/-mv.z),0.0,12.0); gl_Position=projectionMatrix*mv; }`,
         fragmentShader: `varying vec3 vColor; void main(){ float d=length(gl_PointCoord-vec2(0.5)); if(d>0.5) discard;
           gl_FragColor=vec4(vColor,1.0-smoothstep(0.0,0.5,d)); }`,
         transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
