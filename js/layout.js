@@ -68,6 +68,7 @@
   const nav = [
     { t: "Directories", mega: true },
     { t: "Solutions", href: "solutions.html" },
+    { t: "Community", href: "community.html", hot: true },
     { t: "Blog", href: "blog.html" },
     { t: "About", href: "about.html" },
     { t: "Contact us", href: "contact.html" }
@@ -78,7 +79,7 @@
       `<a href="directory.html?type=${k}" style="--c:${v.color}"><i></i><span><b>${esc(v.label)}</b><small>${esc(v.blurb)}</small></span></a>`).join("");
     const links = nav.map((n) => n.mega
       ? `<div class="has-mega"><button class="nav-link" aria-expanded="false" aria-haspopup="true">${n.t}<svg viewBox="0 0 10 6" width="10" height="6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button><div class="mega">${mega}</div></div>`
-      : `<a class="nav-link${page === n.href ? " on" : ""}" href="${n.href}">${n.t}</a>`).join("");
+      : `<a class="nav-link${page === n.href ? " on" : ""}${n.hot ? " hot" : ""}" href="${n.href}">${n.t}${n.hot ? '<span class="nav-new">New</span>' : ""}</a>`).join("");
     const addUrl = "add-startup.html";
     return `<header class="site-header" id="top">
       <div class="wrap bar">
@@ -121,7 +122,7 @@
         </div>
         ${col("Company", [["About", "about.html"], ["Team", "about.html#team-section"], ["FAQ", "faq.html"], ["Add your startup", "add-startup.html"], ["Contact", "contact.html"]])}
         ${col("Directories", dirLinks)}
-        ${col("Resources", [["Blog", "blog.html"], ["Solutions", "solutions.html"], ["Terms", "legal.html#terms"], ["Privacy", "legal.html#privacy"]])}
+        ${col("Resources", [["Community", "community.html"], ["Blog", "blog.html"], ["Solutions", "solutions.html"], ["Terms", "legal.html#terms"], ["Privacy", "legal.html#privacy"]])}
 
         <!-- ============== CONTACT DETAILS: edit in js/config.js → contact { email, phone, whatsapp, address } ============== -->
         <div class="fcol fcontact"><h4>Get in touch</h4><ul>
