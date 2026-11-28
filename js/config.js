@@ -58,7 +58,8 @@ window.SITE = {
     email:    "team.oaksprouts@gmail.com",     // e.g. "hello@yourdomain.com"
     phone:    "+91 77889 90390",     // e.g. "+91 98765 43210"
     whatsapp: "917788990390",     // digits only with country code, e.g. "919876543210"
-    address:  "101, Aairah Terrazo,17, Shankar Sheth Road,Pune 411002"      // e.g. "Pune, Maharashtra, India"
+    address:  "Pune | Nagpur | Goa
+"      // e.g. "Pune, Maharashtra, India"
   },
 
   /* ---------- 5. FOOTER: SOCIAL LINKS (ADD YOURS HERE) ----------
